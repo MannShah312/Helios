@@ -1,8 +1,10 @@
-const CACHE_NAME = 'helios-cache-v1';
+const CACHE_NAME = 'helios-cache-v2';
 const ASSETS_TO_CACHE = [
   '/',
   '/index.html',
   '/favicon.svg',
+  '/icon-192.png',
+  '/icon-512.png',
   '/manifest.json'
 ];
 
