@@ -2,7 +2,7 @@
   "rewrites": [
     {
       "source": "/api/:path*",
-      "destination": "https://YOUR-BACKEND-DEPLOYMENT-URL.onrender.com/api/:path*"
+      "destination": "https://helios-slx3.onrender.com/api/:path*"
     }
   ]
 }
