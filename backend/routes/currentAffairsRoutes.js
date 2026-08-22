@@ -17,6 +17,12 @@ router.get('/latest', (req, res, next) => {
   currentAffairsController.getLatestCurrentAffairs(req, res, next);
 });
 
+// GET /api/current-affairs/metadata/dates
+// Get metadata of all processed dates and topic counts
+router.get('/metadata/dates', (req, res, next) => {
+  currentAffairsController.getDatesMetadata(req, res, next);
+});
+
 // GET /api/current-affairs/:date (date in YYYY-MM-DD format)
 // Fetch current affairs for a specific date
 router.get('/:date', (req, res, next) => {

@@ -39,6 +39,19 @@ const App = () => {
   const [errorMsg, setErrorMsg] = useState(null);
   const [processingStep, setProcessingStep] = useState(0);
 
+  // Real Streak and Goals States
+  const [readStatus, setReadStatus] = useState(() => {
+    try {
+      const saved = localStorage.getItem('helios_read_topics');
+      return saved ? JSON.parse(saved) : {};
+    } catch (e) {
+      console.error('Failed to load read topics from localStorage:', e);
+      return {};
+    }
+  });
+  const [uploadsMetadata, setUploadsMetadata] = useState([]);
+  const [isOverwriting, setIsOverwriting] = useState(false);
+
   // Sync dark mode class
   useEffect(() => {
     if (isDarkMode) {
@@ -51,10 +64,23 @@ const App = () => {
   // Load Initial Content and Generate Date Scroller Array
   useEffect(() => {
     generateDates();
-    fetchLatest();
+    fetchUploadsMetadata();
+    const todayStr = getLocalDateStr(0);
+    setActiveDate(todayStr);
+    fetchDateData(todayStr);
   }, []);
 
   const toggleTheme = () => setIsDarkMode(!isDarkMode);
+
+  // Helper to get local date string
+  const getLocalDateStr = (offset = 0) => {
+    const d = new Date();
+    d.setDate(d.getDate() - offset);
+    const year = d.getFullYear();
+    const month = String(d.getMonth() + 1).padStart(2, '0');
+    const day = String(d.getDate()).padStart(2, '0');
+    return `${year}-${month}-${day}`;
+  };
 
   // Generate date scroller cards for last 6 days
   const generateDates = () => {
@@ -72,30 +98,44 @@ const App = () => {
       list.push({
         day: dayStr,
         month: months[d.getMonth()],
-        label: i === 0 ? 'Today' : '',
+        label: i === 0 ? 'Today' : i === 1 ? 'Yesterday' : '',
         apiFormat
       });
     }
     setDatesList(list);
-    setActiveDate(list[0].apiFormat);
   };
 
-  const fetchLatest = async () => {
-    setErrorMsg(null);
+  // Fetch all uploaded dates metadata to compute streak
+  const fetchUploadsMetadata = async () => {
     try {
-      const res = await fetch('/api/current-affairs/latest');
+      const res = await fetch('/api/current-affairs/metadata/dates');
       const json = await res.json();
       if (json.success && json.data) {
-        setCurrentAffairs(json.data);
-        const formattedDate = json.data.date.split('T')[0];
-        setActiveDate(formattedDate);
+        setUploadsMetadata(json.data);
       }
     } catch (err) {
-      console.error('Error fetching latest content:', err);
+      console.error('Error fetching uploads metadata:', err);
     }
   };
 
-  // Fetch current affairs for a selected date
+  // Fetch current affairs details for a date without switching view
+  const fetchDateData = async (dateStr) => {
+    setErrorMsg(null);
+    try {
+      const res = await fetch(`/api/current-affairs/${dateStr}`);
+      const json = await res.json();
+      if (json.success && json.data) {
+        setCurrentAffairs(json.data);
+      } else {
+        setCurrentAffairs(null);
+      }
+    } catch (err) {
+      console.error('Error fetching date details:', err);
+      setCurrentAffairs(null);
+    }
+  };
+
+  // Fetch current affairs for a selected date and switch view
   const handleDateChange = async (dateStr) => {
     setActiveDate(dateStr);
     setErrorMsg(null);
@@ -114,6 +154,95 @@ const App = () => {
       setCurrentAffairs(null);
       setCurrentView('upload');
     }
+  };
+
+  const handleDateChangeFromUpload = async (dateStr) => {
+    setActiveDate(dateStr);
+    setIsOverwriting(false);
+    await fetchDateData(dateStr);
+  };
+
+  const toggleTopicRead = (dateStr, topicNum) => {
+    setReadStatus(prev => {
+      const list = prev[dateStr] || [];
+      let updatedList;
+      if (list.includes(topicNum)) {
+        updatedList = list.filter(n => n !== topicNum);
+      } else {
+        updatedList = [...list, topicNum];
+      }
+      const updated = { ...prev, [dateStr]: updatedList };
+      localStorage.setItem('helios_read_topics', JSON.stringify(updated));
+      return updated;
+    });
+  };
+
+  // Auto-mark topic as read when details page opens
+  useEffect(() => {
+    if (currentView === 'details' && activeTopic && activeDate) {
+      const dateStr = activeDate;
+      const topicNum = activeTopic.topicNumber;
+      setReadStatus(prev => {
+        const list = prev[dateStr] || [];
+        if (!list.includes(topicNum)) {
+          const updated = { ...prev, [dateStr]: [...list, topicNum] };
+          localStorage.setItem('helios_read_topics', JSON.stringify(updated));
+          return updated;
+        }
+        return prev;
+      });
+    }
+  }, [currentView, activeTopic, activeDate]);
+
+  // Streak Calculation
+  const calculateStreak = (uploads, reads) => {
+    if (!uploads || uploads.length === 0) return 0;
+    
+    const completedDates = new Set();
+    uploads.forEach(u => {
+      const dateStr = u.date.split('T')[0];
+      const readList = reads[dateStr] || [];
+      if (u.topicCount > 0 && readList.length >= u.topicCount) {
+        completedDates.add(dateStr);
+      }
+    });
+
+    const todayStr = getLocalDateStr(0);
+    const yesterdayStr = getLocalDateStr(1);
+
+    const isTodayCompleted = completedDates.has(todayStr);
+    const hasTodayUpload = uploads.some(u => u.date.split('T')[0] === todayStr);
+
+    let startDate;
+    if (isTodayCompleted) {
+      startDate = new Date();
+    } else if (!hasTodayUpload || completedDates.has(yesterdayStr)) {
+      startDate = new Date();
+      startDate.setDate(startDate.getDate() - 1);
+    } else {
+      return 0; // Today is incomplete and yesterday is incomplete
+    }
+
+    let streak = 0;
+    while (true) {
+      const year = startDate.getFullYear();
+      const month = String(startDate.getMonth() + 1).padStart(2, '0');
+      const day = String(startDate.getDate()).padStart(2, '0');
+      const checkStr = `${year}-${month}-${day}`;
+
+      const hasUpload = uploads.some(u => u.date.split('T')[0] === checkStr);
+      if (hasUpload) {
+        if (completedDates.has(checkStr)) {
+          streak++;
+        } else {
+          break;
+        }
+      } else {
+        break;
+      }
+      startDate.setDate(startDate.getDate() - 1);
+    }
+    return streak;
   };
 
   // Upload newspaper/headlines list image
@@ -148,6 +277,8 @@ const App = () => {
         setProcessingStep(4);
         setCurrentAffairs(data.data);
         setActiveDate(data.data.date.split('T')[0]);
+        setIsOverwriting(false);
+        fetchUploadsMetadata(); // Refresh metadata!
         setTimeout(() => {
           setCurrentView('list');
           setSelectedFile(null);
@@ -328,110 +459,204 @@ const App = () => {
              </div>
           </div>
 
+          {/* Date Selector Row */}
+          <div className="flex gap-2 overflow-x-auto pb-2 mb-6 scrollbar-hide">
+             {datesList.map((d, i) => {
+               const isSelected = activeDate === d.apiFormat;
+               return (
+                 <button 
+                   key={i} 
+                   onClick={() => handleDateChangeFromUpload(d.apiFormat)}
+                   className={`px-4 py-2 rounded-full border text-xs font-bold transition-all shrink-0 ${
+                     isSelected 
+                       ? 'bg-orange-500 border-orange-500 text-white shadow-sm scale-105' 
+                       : 'bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-800 text-slate-600 dark:text-slate-400 hover:border-slate-350'
+                   }`}
+                 >
+                   {d.label ? d.label : `${d.day} ${d.month}`}
+                 </button>
+               );
+             })}
+             <button className="px-4 py-2 rounded-full bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 text-slate-400 shrink-0 hover:border-slate-300 relative flex items-center justify-center gap-1.5 text-xs font-bold">
+                <Calendar size={14} /> Custom
+                <input 
+                  type="date" 
+                  onChange={(e) => handleDateChangeFromUpload(e.target.value)}
+                  className="absolute inset-0 opacity-0 cursor-pointer"
+                />
+             </button>
+          </div>
+
           {/* Stats Row */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 md:gap-6 mb-8">
-            <div className="bg-[#1A1F2E] dark:bg-slate-900 text-white rounded-[2rem] p-6 flex items-center justify-between shadow-xl shadow-blue-900/10 dark:shadow-none border border-transparent dark:border-slate-800 hover:-translate-y-1 transition-all">
-               <div className="flex items-center gap-4 md:gap-6">
-                 <div className="w-14 h-14 md:w-16 md:h-16 bg-orange-500/20 rounded-2xl flex items-center justify-center text-orange-500 shrink-0">
-                   <Flame size={32} className="fill-orange-500/20" />
-                 </div>
-                 <div>
-                    <p className="text-xs md:text-sm text-slate-400 font-semibold uppercase tracking-wider mb-1">Study Streak</p>
-                    <p className="text-3xl md:text-4xl font-bold flex items-baseline gap-2">
-                       28 <span className="text-base md:text-lg font-medium text-slate-400 normal-case">Days</span>
-                    </p>
-                 </div>
-               </div>
-               <div className="h-12 w-px bg-slate-700/50 hidden md:block"></div>
-            </div>
-            
-            <div className="bg-white dark:bg-slate-900 rounded-[2rem] p-6 flex items-center gap-4 md:gap-6 shadow-[0_8px_30px_rgb(0,0,0,0.04)] border border-slate-100 dark:border-slate-800 hover:-translate-y-1 transition-all">
-               <div className="w-14 h-14 md:w-16 md:h-16 bg-slate-50 dark:bg-slate-800 rounded-2xl flex items-center justify-center text-slate-700 dark:text-slate-300 border border-slate-100 dark:border-slate-700 shrink-0">
-                 <Target size={32} />
-               </div>
-               <div>
-                  <p className="text-xs md:text-sm text-slate-500 dark:text-slate-400 font-semibold uppercase tracking-wider mb-1">Daily Goal</p>
-                  <p className="text-3xl md:text-4xl font-bold text-slate-900 dark:text-white flex items-baseline gap-2">
-                     8 <span className="text-base md:text-lg font-medium text-slate-400 normal-case">/ 10 hrs</span>
-                  </p>
-               </div>
-            </div>
-          </div>
+          {(() => {
+            const totalTopics = currentAffairs?.topics?.length || 0;
+            const readTopicsList = readStatus[activeDate] || [];
+            const readCount = readTopicsList.filter(num => currentAffairs?.topics?.some(t => t.topicNumber === num)).length;
+            const streakVal = calculateStreak(uploadsMetadata, readStatus);
+            const isDayCompleted = totalTopics > 0 && readCount === totalTopics;
 
-          {/* Core Action: The Upload Zone */}
-          <div className="bg-white dark:bg-slate-900 rounded-[2rem] shadow-[0_8px_30px_rgb(0,0,0,0.04)] border border-slate-100 dark:border-slate-800 p-6 md:p-8 mb-10 flex flex-col">
-            <div className="flex items-center justify-between mb-6">
-               <h3 className="text-xl font-bold text-slate-900 dark:text-white">Today's Content Generation</h3>
-               <span className="text-xs font-bold bg-orange-100 text-orange-600 dark:bg-orange-500/20 dark:text-orange-400 px-3 py-1.5 rounded-full">AI Powered</span>
-            </div>
-
-            {errorMsg && (
-              <div className="mb-6 p-4 bg-red-50 dark:bg-red-950/20 text-red-700 dark:text-red-400 border border-red-100 dark:border-red-900/50 rounded-2xl text-sm flex items-center gap-3">
-                <AlertCircle size={20} />
-                <span>{errorMsg}</span>
-              </div>
-            )}
-            
-            {!selectedFile ? (
-              <div 
-                onClick={() => fileInputRef.current?.click()}
-                onDragOver={(e) => { e.preventDefault(); setDragActive(true); }}
-                onDragLeave={() => setDragActive(false)}
-                onDrop={handleDrop}
-                className={`border-2 border-dashed rounded-3xl p-8 md:p-12 flex flex-col items-center justify-center text-center cursor-pointer transition-all min-h-[280px] group ${
-                  dragActive ? 'border-orange-500 bg-orange-50 dark:bg-orange-950/20' : 'border-slate-200 dark:border-slate-700 bg-slate-50/50 dark:bg-slate-800/20 hover:bg-slate-50 dark:hover:bg-slate-800/50 hover:border-orange-300 dark:hover:border-orange-700'
-                }`}
-              >
-                <div className="w-16 h-16 bg-white dark:bg-slate-800 text-orange-500 rounded-2xl flex items-center justify-center mb-5 shadow-sm border border-slate-100 dark:border-slate-700 group-hover:scale-110 transition-transform">
-                  <Upload size={28} />
+            return (
+              <>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 md:gap-6 mb-8">
+                  <div className="bg-[#1A1F2E] dark:bg-slate-900 text-white rounded-[2rem] p-6 flex items-center justify-between shadow-xl shadow-blue-900/10 dark:shadow-none border border-transparent dark:border-slate-800 hover:-translate-y-1 transition-all">
+                     <div className="flex items-center gap-4 md:gap-6">
+                       <div className={`w-14 h-14 md:w-16 md:h-16 rounded-2xl flex items-center justify-center shrink-0 ${streakVal > 0 ? 'bg-orange-500/20 text-orange-500' : 'bg-slate-700/25 text-slate-500'}`}>
+                         <Flame size={32} className={streakVal > 0 ? 'fill-orange-500/20' : ''} />
+                       </div>
+                       <div>
+                          <p className="text-xs md:text-sm text-slate-400 font-semibold uppercase tracking-wider mb-1">Study Streak</p>
+                          <p className="text-3xl md:text-4xl font-bold flex items-baseline gap-2">
+                             {streakVal} <span className="text-base md:text-lg font-medium text-slate-400 normal-case">Days</span>
+                          </p>
+                       </div>
+                     </div>
+                     <div className="h-12 w-px bg-slate-700/50 hidden md:block"></div>
+                  </div>
+                  
+                  <div className="bg-white dark:bg-slate-900 rounded-[2rem] p-6 flex items-center gap-4 md:gap-6 shadow-[0_8px_30px_rgb(0,0,0,0.04)] border border-slate-100 dark:border-slate-800 hover:-translate-y-1 transition-all">
+                     <div className={`w-14 h-14 md:w-16 md:h-16 rounded-2xl flex items-center justify-center shrink-0 border ${
+                       isDayCompleted 
+                         ? 'bg-emerald-500/10 text-emerald-500 border-emerald-500/20' 
+                         : 'bg-slate-50 dark:bg-slate-800 text-slate-700 dark:text-slate-300 border border-slate-100 dark:border-slate-700'
+                     }`}>
+                       <Target size={32} />
+                     </div>
+                     <div>
+                        <p className="text-xs md:text-sm text-slate-500 dark:text-slate-400 font-semibold uppercase tracking-wider mb-1">Daily Goal</p>
+                        <p className="text-3xl md:text-4xl font-bold text-slate-900 dark:text-white flex items-baseline gap-2">
+                           {readCount} <span className="text-base md:text-lg font-medium text-slate-400 normal-case">/ {totalTopics} read</span>
+                        </p>
+                     </div>
+                  </div>
                 </div>
-                <h4 className="text-lg font-bold text-slate-900 dark:text-white mb-2">Upload Daily Newspaper or Image</h4>
-                <p className="text-slate-500 dark:text-slate-400 text-sm max-w-sm mb-6">
-                  Select your headlines list image or paper snapshot to analyze. We'll automatically fetch, OCR, and ground the topics in Google Search.
-                </p>
-                <button className="px-6 py-2.5 bg-slate-900 dark:bg-white text-white dark:text-slate-900 rounded-full text-sm font-bold shadow-md hover:shadow-lg transition-all">
-                  Browse Files
-                </button>
-              </div>
-            ) : (
-              <div className="border border-slate-100 dark:border-slate-800 rounded-3xl p-6 md:p-8 flex flex-col items-center bg-slate-50/50 dark:bg-slate-800/20">
-                <div className="relative w-full max-w-sm aspect-[4/3] bg-white dark:bg-slate-800 rounded-2xl overflow-hidden mb-6 border border-slate-200 dark:border-slate-700 shadow-sm flex items-center justify-center group">
-                   <img src={URL.createObjectURL(selectedFile)} alt="Preview" className="w-full h-full object-contain group-hover:scale-105 transition-transform duration-500" />
-                   <div className="absolute inset-0 bg-gradient-to-t from-slate-900/80 via-transparent to-transparent"></div>
-                   <div className="absolute bottom-4 left-4 right-4 flex items-center justify-between text-white">
-                      <div className="truncate pr-4 flex items-center gap-2">
-                        <ImageIcon size={16} />
-                        <span className="text-sm font-medium truncate">{selectedFile.name}</span>
+
+                {/* Core Action: The Upload Zone */}
+                <div className="bg-white dark:bg-slate-900 rounded-[2rem] shadow-[0_8px_30px_rgb(0,0,0,0.04)] border border-slate-100 dark:border-slate-800 p-6 md:p-8 mb-10 flex flex-col">
+                  <div className="flex items-center justify-between mb-6">
+                     <h3 className="text-xl font-bold text-slate-900 dark:text-white">
+                       {currentAffairs ? (isOverwriting ? 'Re-upload Image' : 'Content Analyzed') : 'Daily Content Generation'}
+                     </h3>
+                     {isOverwriting && !selectedFile && (
+                       <button 
+                         onClick={() => setIsOverwriting(false)} 
+                         className="text-xs font-bold text-slate-500 hover:text-slate-850 dark:hover:text-white px-3 py-1.5 rounded-full hover:bg-slate-100 dark:hover:bg-slate-800 border border-slate-200 dark:border-slate-750"
+                       >
+                         Cancel
+                       </button>
+                     )}
+                     {!isOverwriting && (
+                       <span className="text-xs font-bold bg-orange-100 text-orange-600 dark:bg-orange-500/20 dark:text-orange-400 px-3 py-1.5 rounded-full">
+                         {currentAffairs ? 'Completed' : 'AI Powered'}
+                       </span>
+                     )}
+                  </div>
+
+                  {errorMsg && (
+                    <div className="mb-6 p-4 bg-red-50 dark:bg-red-950/20 text-red-700 dark:text-red-400 border border-red-100 dark:border-red-900/50 rounded-2xl text-sm flex items-center gap-3">
+                      <AlertCircle size={20} />
+                      <span>{errorMsg}</span>
+                    </div>
+                  )}
+                  
+                  {currentAffairs && !isOverwriting ? (
+                    <div className="border border-slate-100 dark:border-slate-800 rounded-3xl p-6 md:p-8 flex flex-col md:flex-row items-center gap-6 bg-slate-50/50 dark:bg-slate-800/20 w-full">
+                      {currentAffairs.sourceImage?.url && (
+                        <div className="w-full md:w-1/3 aspect-[4/3] rounded-2xl overflow-hidden border border-slate-200 dark:border-slate-700 shadow-sm relative shrink-0">
+                          <img src={currentAffairs.sourceImage.url} alt="Uploaded Source" className="w-full h-full object-cover" />
+                          <div className="absolute inset-0 bg-slate-900/10"></div>
+                        </div>
+                      )}
+                      <div className="flex-1 flex flex-col justify-center text-center md:text-left">
+                        <h4 className="text-lg font-bold text-slate-900 dark:text-white mb-2">
+                          Current Affairs is Ready
+                        </h4>
+                        <p className="text-slate-500 dark:text-slate-400 text-sm mb-6 max-w-sm md:max-w-md">
+                          Helios has processed the headlines image for {activeDate === datesList[0]?.apiFormat ? 'Today' : activeDate}. You have read {readCount} out of {totalTopics} topics.
+                        </p>
+                        
+                        <div className="flex flex-col sm:flex-row gap-4 w-full md:max-w-md">
+                          <button 
+                            onClick={() => setCurrentView('list')}
+                            className="flex-1 py-3 px-4 rounded-xl bg-orange-500 hover:bg-orange-600 text-white font-bold shadow-lg shadow-orange-500/30 transition-all active:scale-95 flex items-center justify-center gap-2 text-sm"
+                          >
+                            <BookOpen size={16} /> View Study Notes
+                          </button>
+                          <button 
+                            onClick={() => setIsOverwriting(true)}
+                            className="flex-1 py-3 px-4 rounded-xl border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-300 font-bold hover:bg-slate-100 dark:hover:bg-slate-800 transition-all text-sm"
+                          >
+                            Re-upload Image
+                          </button>
+                        </div>
                       </div>
-                      <span className="text-xs bg-black/50 px-2 py-1 rounded backdrop-blur-sm whitespace-nowrap font-medium">
-                        {(selectedFile.size / (1024 * 1024)).toFixed(2)} MB
-                      </span>
-                   </div>
-                </div>
+                    </div>
+                  ) : (
+                    <>
+                      {!selectedFile ? (
+                        <div 
+                          onClick={() => fileInputRef.current?.click()}
+                          onDragOver={(e) => { e.preventDefault(); setDragActive(true); }}
+                          onDragLeave={() => setDragActive(false)}
+                          onDrop={handleDrop}
+                          className={`border-2 border-dashed rounded-3xl p-8 md:p-12 flex flex-col items-center justify-center text-center cursor-pointer transition-all min-h-[280px] group ${
+                            dragActive ? 'border-orange-500 bg-orange-50 dark:bg-orange-950/20' : 'border-slate-200 dark:border-slate-700 bg-slate-50/50 dark:bg-slate-800/20 hover:bg-slate-50 dark:hover:bg-slate-800/50 hover:border-orange-300 dark:hover:border-orange-700'
+                          }`}
+                        >
+                          <div className="w-16 h-16 bg-white dark:bg-slate-800 text-orange-500 rounded-2xl flex items-center justify-center mb-5 shadow-sm border border-slate-100 dark:border-slate-700 group-hover:scale-110 transition-transform">
+                            <Upload size={28} />
+                          </div>
+                          <h4 className="text-lg font-bold text-slate-900 dark:text-white mb-2">Upload Newspaper or Image for {activeDate === datesList[0]?.apiFormat ? 'Today' : activeDate}</h4>
+                          <p className="text-slate-500 dark:text-slate-400 text-sm max-w-sm mb-6">
+                            Select your headlines list image or paper snapshot to analyze. We'll automatically fetch, OCR, and ground the topics in Google Search.
+                          </p>
+                          <button className="px-6 py-2.5 bg-slate-900 dark:bg-white text-white dark:text-slate-900 rounded-full text-sm font-bold shadow-md hover:shadow-lg transition-all">
+                            Browse Files
+                          </button>
+                        </div>
+                      ) : (
+                        <div className="border border-slate-100 dark:border-slate-800 rounded-3xl p-6 md:p-8 flex flex-col items-center bg-slate-50/50 dark:bg-slate-800/20 w-full">
+                          <div className="relative w-full max-w-sm aspect-[4/3] bg-white dark:bg-slate-800 rounded-2xl overflow-hidden mb-6 border border-slate-200 dark:border-slate-700 shadow-sm flex items-center justify-center group">
+                             <img src={URL.createObjectURL(selectedFile)} alt="Preview" className="w-full h-full object-contain group-hover:scale-105 transition-transform duration-500" />
+                             <div className="absolute inset-0 bg-gradient-to-t from-slate-900/80 via-transparent to-transparent"></div>
+                             <div className="absolute bottom-4 left-4 right-4 flex items-center justify-between text-white">
+                                <div className="truncate pr-4 flex items-center gap-2">
+                                  <ImageIcon size={16} />
+                                  <span className="text-sm font-medium truncate">{selectedFile.name}</span>
+                                </div>
+                                <span className="text-xs bg-black/50 px-2 py-1 rounded backdrop-blur-sm whitespace-nowrap font-medium">
+                                  {(selectedFile.size / (1024 * 1024)).toFixed(2)} MB
+                                </span>
+                             </div>
+                          </div>
 
-                <div className="inline-flex items-center gap-2 px-5 py-2.5 bg-emerald-50 dark:bg-emerald-900/20 text-emerald-700 dark:text-emerald-400 rounded-full text-sm font-bold mb-8 border border-emerald-100 dark:border-emerald-800/50">
-                  <CheckCircle2 size={18} />
-                  Ready to process
-                </div>
+                          <div className="inline-flex items-center gap-2 px-5 py-2.5 bg-emerald-50 dark:bg-emerald-900/20 text-emerald-700 dark:text-emerald-400 rounded-full text-sm font-bold mb-8 border border-emerald-100 dark:border-emerald-800/50">
+                            <CheckCircle2 size={18} />
+                            Ready to process
+                          </div>
 
-                <div className="flex flex-col sm:flex-row gap-4 w-full max-w-sm">
-                  <button 
-                    onClick={() => setSelectedFile(null)}
-                    className="flex-1 py-3 px-4 rounded-xl border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-300 font-bold hover:bg-slate-100 dark:hover:bg-slate-800 transition-all text-sm"
-                  >
-                    Change File
-                  </button>
-                  <button 
-                    onClick={handleProcessImage}
-                    className="flex-1 py-3 px-4 rounded-xl bg-orange-500 hover:bg-orange-600 text-white font-bold shadow-lg shadow-orange-500/30 transition-all active:scale-95 flex items-center justify-center gap-2 text-sm"
-                  >
-                    Analyze Now <ArrowRight size={16} />
-                  </button>
+                          <div className="flex flex-col sm:flex-row gap-4 w-full max-w-sm">
+                            <button 
+                              onClick={() => setSelectedFile(null)}
+                              className="flex-1 py-3 px-4 rounded-xl border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-300 font-bold hover:bg-slate-100 dark:hover:bg-slate-800 transition-all text-sm"
+                            >
+                              Change File
+                            </button>
+                            <button 
+                              onClick={handleProcessImage}
+                              className="flex-1 py-3 px-4 rounded-xl bg-orange-500 hover:bg-orange-600 text-white font-bold shadow-lg shadow-orange-500/30 transition-all active:scale-95 flex items-center justify-center gap-2 text-sm"
+                            >
+                              Analyze Now <ArrowRight size={16} />
+                            </button>
+                          </div>
+                        </div>
+                      )}
+                    </>
+                  )}
+                  <input type="file" ref={fileInputRef} onChange={handleFileSelect} className="hidden" accept="image/*" />
                 </div>
-              </div>
-            )}
-            <input type="file" ref={fileInputRef} onChange={handleFileSelect} className="hidden" accept="image/*" />
-          </div>
+              </>
+            );
+          })()}
 
           {/* Quick Access Grid */}
           <div>
@@ -607,13 +832,18 @@ const App = () => {
                     </div>
                     
                     <div className="flex-1 flex flex-col justify-center">
-                       <div className="flex items-center gap-2 mb-3">
+                       <div className="flex items-center gap-2 mb-3 flex-wrap">
                           <span className="text-xs font-bold text-blue-600 dark:text-blue-400 bg-blue-50 dark:bg-blue-900/20 px-2.5 py-1 rounded-md">
                             {featuredTopic.classification.subject}
                           </span>
                           <span className="text-xs font-bold text-orange-600 dark:text-orange-400 bg-orange-50 dark:bg-orange-900/20 px-2.5 py-1 rounded-md">
                             {featuredTopic.classification.gsPaper}
                           </span>
+                          {(readStatus[activeDate] || []).includes(featuredTopic.topicNumber) && (
+                            <span className="text-xs font-bold text-emerald-600 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-900/20 px-2.5 py-1 rounded-md flex items-center gap-1">
+                              <CheckCircle2 size={12} className="fill-emerald-500/25" /> Completed
+                            </span>
+                          )}
                        </div>
                        <h4 className="text-xl md:text-2xl font-bold text-slate-900 dark:text-white mb-3 leading-tight group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors">
                          {featuredTopic.title}
@@ -648,9 +878,16 @@ const App = () => {
                         className="bg-white dark:bg-slate-900 rounded-2xl p-5 border border-slate-200/60 dark:border-slate-800 shadow-sm cursor-pointer hover:shadow-md hover:border-slate-300 dark:hover:border-slate-700 transition-all flex flex-col h-full group"
                       >
                         <div className="flex justify-between items-start mb-3">
-                          <span className="text-[10px] uppercase font-bold tracking-wider text-emerald-600 dark:text-emerald-400">
-                            {topic.classification.subject}
-                          </span>
+                          <div className="flex items-center gap-2">
+                            <span className="text-[10px] uppercase font-bold tracking-wider text-emerald-600 dark:text-emerald-400">
+                              {topic.classification.subject}
+                            </span>
+                            {(readStatus[activeDate] || []).includes(topic.topicNumber) && (
+                              <span className="text-[9px] font-bold text-emerald-600 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-900/20 px-1.5 py-0.5 rounded flex items-center gap-0.5">
+                                <CheckCircle2 size={10} className="fill-emerald-500/25" /> Read
+                              </span>
+                            )}
+                          </div>
                           <span className={`text-[10px] font-bold px-2 py-0.5 rounded ${
                             topic.importance === 'HIGH' ? 'bg-red-50 text-red-600 dark:bg-red-900/20 dark:text-red-400' : 'bg-amber-50 text-amber-600 dark:bg-amber-900/20 dark:text-amber-400'
                           }`}>
@@ -707,7 +944,18 @@ const App = () => {
                   {activeTopic.title}
                 </h2>
               </div>
-              <div className="flex gap-2 shrink-0">
+              <div className="flex gap-2 shrink-0 items-center flex-wrap">
+                <button 
+                  onClick={() => toggleTopicRead(activeDate, activeTopic.topicNumber)}
+                  className={`px-3 py-1 rounded-md text-xs font-bold flex items-center gap-1.5 border transition-colors ${
+                    (readStatus[activeDate] || []).includes(activeTopic.topicNumber)
+                      ? 'bg-emerald-50 text-emerald-700 border-emerald-250 dark:bg-emerald-950/20 dark:text-emerald-400 dark:border-emerald-800'
+                      : 'bg-slate-50 text-slate-600 border-slate-200 dark:bg-slate-850 dark:text-slate-400 dark:border-slate-750'
+                  }`}
+                >
+                  <CheckCircle2 size={14} className={(readStatus[activeDate] || []).includes(activeTopic.topicNumber) ? 'text-emerald-500 fill-emerald-500/25' : 'text-slate-400'} />
+                  {(readStatus[activeDate] || []).includes(activeTopic.topicNumber) ? 'Read' : 'Mark as Read'}
+                </button>
                 <span className="badge bg-blue-50 text-blue-700 dark:bg-blue-950/30 dark:text-blue-400 border border-blue-100 dark:border-blue-900/50 px-3 py-1 rounded-md text-xs font-bold uppercase">
                   {activeTopic.classification.gsPaper}
                 </span>

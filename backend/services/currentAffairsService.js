@@ -6,9 +6,9 @@ const { cloudinary } = require('../config/cloudinary');
 const currentAffairsResponseSchema = {
   type: "object",
   properties: {
-    date: { 
-      type: "string", 
-      description: "The date of the current affairs extracted from the image in YYYY-MM-DD format (e.g. 2026-08-20)" 
+    date: {
+      type: "string",
+      description: "The date of the current affairs extracted from the image in YYYY-MM-DD format (e.g. 2026-08-20)"
     },
     topics: {
       type: "array",
@@ -16,80 +16,80 @@ const currentAffairsResponseSchema = {
       items: {
         type: "object",
         properties: {
-          topicNumber: { 
-            type: "integer", 
-            description: "The original number of the topic from the list (e.g. 1, 2, 3, etc.)" 
+          topicNumber: {
+            type: "integer",
+            description: "The original number of the topic from the list (e.g. 1, 2, 3, etc.)"
           },
-          originalHeadline: { 
-            type: "string", 
-            description: "The topic headline exactly as written in the image" 
+          originalHeadline: {
+            type: "string",
+            description: "The topic headline exactly as written in the image"
           },
-          title: { 
-            type: "string", 
-            description: "A refined, clear title for the topic suitable for UPSC" 
+          title: {
+            type: "string",
+            description: "A refined, clear title for the topic suitable for UPSC"
           },
-          shortDescription: { 
-            type: "string", 
-            description: "A concise 1-2 sentence explanation of the current event (easy to understand, factual, not a full Mains answer)" 
+          shortDescription: {
+            type: "string",
+            description: "A concise 1-2 sentence explanation of the current event (easy to understand, factual, not a full Mains answer)"
           },
           classification: {
             type: "object",
             properties: {
-              gsPaper: { 
-                type: "string", 
-                enum: ["GS-I", "GS-II", "GS-III", "GS-IV"], 
-                description: "Primary UPSC General Studies paper classification" 
+              gsPaper: {
+                type: "string",
+                enum: ["GS-I", "GS-II", "GS-III", "GS-IV"],
+                description: "Primary UPSC General Studies paper classification"
               },
-              subject: { 
-                type: "string", 
-                description: "The subject under the GS paper (e.g. Economy, Polity, History, Science & Technology)" 
+              subject: {
+                type: "string",
+                description: "The subject under the GS paper (e.g. Economy, Polity, History, Science & Technology)"
               },
-              subSubject: { 
-                type: "string", 
-                description: "A more specific sub-topic or theme" 
+              subSubject: {
+                type: "string",
+                description: "A more specific sub-topic or theme"
               }
             },
             required: ["gsPaper", "subject", "subSubject"]
           },
-          importance: { 
-            type: "string", 
+          importance: {
+            type: "string",
             enum: ["HIGH", "MEDIUM", "LOW"],
-            description: "Relevance of this topic for UPSC exam preparation" 
+            description: "Relevance of this topic for UPSC exam preparation"
           },
           analysis: {
             type: "object",
             properties: {
-              whatHappened: { 
-                type: "string", 
-                description: "A summary of the current news event or decision" 
+              whatHappened: {
+                type: "string",
+                description: "A summary of the current news event or decision"
               },
-              background: { 
-                type: "string", 
-                description: "Brief background or historical context surrounding this issue" 
+              background: {
+                type: "string",
+                description: "Brief background or historical context surrounding this issue"
               },
-              whyImportant: { 
-                type: "string", 
-                description: "UPSC Mains significance of this topic" 
+              whyImportant: {
+                type: "string",
+                description: "UPSC Mains significance of this topic"
               },
-              keyPoints: { 
-                type: "array", 
-                items: { type: "string" }, 
-                description: "2-5 analytical key points or dimensions of the topic" 
+              keyPoints: {
+                type: "array",
+                items: { type: "string" },
+                description: "2-5 analytical key points or dimensions of the topic"
               },
-              governmentMeasures: { 
-                type: "array", 
-                items: { type: "string" }, 
-                description: "List of relevant policies, acts, schemes, or measures taken by the government" 
+              governmentMeasures: {
+                type: "array",
+                items: { type: "string" },
+                description: "List of relevant policies, acts, schemes, or measures taken by the government"
               },
-              challenges: { 
-                type: "array", 
-                items: { type: "string" }, 
-                description: "Major challenges, drawbacks, or issues associated with it" 
+              challenges: {
+                type: "array",
+                items: { type: "string" },
+                description: "Major challenges, drawbacks, or issues associated with it"
               },
-              wayForward: { 
-                type: "array", 
-                items: { type: "string" }, 
-                description: "Actionable recommendations, reforms, or solutions" 
+              wayForward: {
+                type: "array",
+                items: { type: "string" },
+                description: "Actionable recommendations, reforms, or solutions"
               }
             },
             required: ["whatHappened", "background", "whyImportant", "keyPoints", "governmentMeasures", "challenges", "wayForward"]
@@ -97,15 +97,15 @@ const currentAffairsResponseSchema = {
           prelims: {
             type: "object",
             properties: {
-              facts: { 
-                type: "array", 
-                items: { type: "string" }, 
-                description: "Factual information useful for Prelims (institutions, grouping, terms, articles, etc.)" 
+              facts: {
+                type: "array",
+                items: { type: "string" },
+                description: "Factual information useful for Prelims (institutions, grouping, terms, articles, etc.)"
               },
-              keywords: { 
-                type: "array", 
-                items: { type: "string" }, 
-                description: "Important terminology or core keywords related to the topic" 
+              keywords: {
+                type: "array",
+                items: { type: "string" },
+                description: "Important terminology or core keywords related to the topic"
               }
             },
             required: ["facts", "keywords"]
@@ -113,13 +113,13 @@ const currentAffairsResponseSchema = {
           revision: {
             type: "object",
             properties: {
-              question: { 
-                type: "string", 
-                description: "One active-recall revision question focused on UPSC dimensions" 
+              question: {
+                type: "string",
+                description: "One active-recall revision question focused on UPSC dimensions"
               },
-              answer: { 
-                type: "string", 
-                description: "A concise answer explaining the key points of the revision question" 
+              answer: {
+                type: "string",
+                description: "A concise answer explaining the key points of the revision question"
               }
             },
             required: ["question", "answer"]
@@ -139,7 +139,7 @@ const currentAffairsResponseSchema = {
           }
         },
         "required": [
-          "topicNumber", "originalHeadline", "title", "shortDescription", 
+          "topicNumber", "originalHeadline", "title", "shortDescription",
           "classification", "importance", "analysis", "prelims", "revision", "sources"
         ]
       }
@@ -208,7 +208,7 @@ class CurrentAffairsService {
           },
         ],
         config: {
-          tools: [{ googleSearch: {} }], // Enable search grounding
+
           responseMimeType: "application/json",
           responseSchema: currentAffairsResponseSchema,
         },
@@ -292,7 +292,7 @@ class CurrentAffairsService {
         },
         { upsert: true, new: true, runValidators: true }
       );
-      
+
       console.log('[CurrentAffairs] Processing complete');
       return savedDoc;
     } catch (error) {
@@ -315,6 +315,22 @@ class CurrentAffairsService {
   }
 
   /**
+   * Fetch all dates with their topic counts
+   */
+  async getDatesMetadata() {
+    try {
+      const docs = await CurrentAffairs.find({}, 'date topicCount').sort({ date: -1 });
+      return docs.map(doc => ({
+        date: doc.date,
+        topicCount: doc.topicCount
+      }));
+    } catch (error) {
+      console.error(`[CurrentAffairs] Error fetching dates metadata: ${error.message}`);
+      throw new Error(`Database query failed: ${error.message}`);
+    }
+  }
+
+  /**
    * Fetch current affairs document by date string (e.g. 2026-08-20)
    */
   async getByDate(dateString) {
@@ -323,7 +339,7 @@ class CurrentAffairsService {
       if (isNaN(parsedDate.getTime())) {
         throw new Error(`Invalid date string: ${dateString}`);
       }
-      
+
       // Normalize to midnight UTC to match DB format
       parsedDate.setUTCHours(0, 0, 0, 0);
 

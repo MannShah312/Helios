@@ -136,6 +136,26 @@ class CurrentAffairsController {
       });
     }
   }
+
+  /**
+   * GET /api/current-affairs/metadata/dates
+   * Get metadata containing processed dates and topic counts
+   */
+  async getDatesMetadata(req, res, next) {
+    try {
+      const result = await currentAffairsService.getDatesMetadata();
+      res.status(200).json({
+        success: true,
+        data: result
+      });
+    } catch (error) {
+      res.status(500).json({
+        success: false,
+        message: error.message || "Failed to retrieve dates metadata.",
+        errorCode: "DATABASE_ERROR"
+      });
+    }
+  }
 }
 
 class CurrentAffairsControllerPlaceholder {} // Fix for Mongoose exports reference matching standard style
