@@ -1,6 +1,8 @@
 const CurrentAffairs = require('../models/CurrentAffairs');
 const { getAiClient, getGeminiModel } = require('../config/gemini');
-const { cloudinary } = require('../config/cloudinary');
+const { cloudinary = {} } = require('../config/cloudinary');
+const Subscription = require('../models/Subscription');
+const webpush = require('web-push');
 
 // JSON schema definition for structured output matching our desired Mongoose schema
 const currentAffairsResponseSchema = {
@@ -294,6 +296,48 @@ class CurrentAffairsService {
       );
 
       console.log('[CurrentAffairs] Processing complete');
+
+      // Trigger push notifications asynchronously
+      (async () => {
+        try {
+          const subscriptions = await Subscription.find();
+          if (subscriptions.length === 0) return;
+
+          console.log(`[CurrentAffairs] Broadcasting push notifications to ${subscriptions.length} subscribers`);
+          const formattedDate = savedDoc.date.toISOString().split('T')[0];
+          const notificationPayload = JSON.stringify({
+            title: 'Helios Study Deck Ready!',
+            body: `Your current affairs deck for ${formattedDate} is ready with ${savedDoc.topicCount} topics!`,
+            url: '/'
+          });
+
+          webpush.setVapidDetails(
+            process.env.VAPID_EMAIL || 'mailto:mannwork312@gmail.com',
+            process.env.VAPID_PUBLIC_KEY,
+            process.env.VAPID_PRIVATE_KEY
+          );
+
+          await Promise.all(subscriptions.map(sub => 
+            webpush.sendNotification({
+              endpoint: sub.endpoint,
+              keys: {
+                p256dh: sub.keys.p256dh,
+                auth: sub.keys.auth
+              }
+            }, notificationPayload).catch(async err => {
+              console.error(`[CurrentAffairs] Failed to send push to ${sub.endpoint}:`, err.message);
+              if (err.statusCode === 410 || err.statusCode === 404) {
+                // Subscription has expired or is no longer valid, delete it
+                await Subscription.deleteOne({ endpoint: sub.endpoint });
+                console.log(`[CurrentAffairs] Deleted expired subscription: ${sub.endpoint}`);
+              }
+            })
+          ));
+        } catch (pushErr) {
+          console.error('[CurrentAffairs] Push notification broadcast failed:', pushErr.message);
+        }
+      })();
+
       return savedDoc;
     } catch (error) {
       console.error(`[CurrentAffairs] Database saving failed: ${error.message}`);

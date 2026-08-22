@@ -1,0 +1,18 @@
+{
+  "short_name": "Helios",
+  "name": "Helios",
+  "description": "Smart daily current affairs tracker and UPSC revisions dashboard.",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#FFFDF9",
+  "theme_color": "#FFFDF9",
+  "orientation": "portrait-primary",
+  "icons": [
+    {
+      "src": "/favicon.svg",
+      "type": "image/svg+xml",
+      "sizes": "any",
+      "purpose": "any maskable"
+    }
+  ]
+}

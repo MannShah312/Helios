@@ -3,7 +3,7 @@ import {
   Sun, Moon, Menu, X, Upload, FileText, Image as ImageIcon, 
   ChevronLeft, ArrowRight, Bookmark, Search, Calendar, CheckCircle2,
   BookOpen, Globe, Cpu, Leaf, Landmark, MoreHorizontal, RefreshCw,
-  ArrowUpRight, Flame, Target, Mic, PenTool, Book, Clock, AlertCircle, HelpCircle, Eye, EyeOff, ExternalLink
+  ArrowUpRight, Flame, Target, Mic, PenTool, Book, Clock, AlertCircle, HelpCircle, Eye, EyeOff, ExternalLink, Bell
 } from 'lucide-react';
 
 const mockCategories = [
@@ -51,6 +51,83 @@ const App = () => {
   });
   const [uploadsMetadata, setUploadsMetadata] = useState([]);
   const [isOverwriting, setIsOverwriting] = useState(false);
+
+  // Push Notification States & Helpers
+  const [pushNotificationEnabled, setPushNotificationEnabled] = useState(false);
+
+  useEffect(() => {
+    if ('serviceWorker' in navigator && 'PushManager' in window) {
+      navigator.serviceWorker.ready.then(reg => {
+        reg.pushManager.getSubscription().then(sub => {
+          setPushNotificationEnabled(!!sub);
+        });
+      });
+    }
+  }, []);
+
+  const urlBase64ToUint8Array = (base64String) => {
+    const padding = '='.repeat((4 - base64String.length % 4) % 4);
+    const base64 = (base64String + padding)
+      .replace(/\-/g, '+')
+      .replace(/_/g, '/');
+    const rawData = window.atob(base64);
+    const outputArray = new Uint8Array(rawData.length);
+    for (let i = 0; i < rawData.length; ++i) {
+      outputArray[i] = rawData.charCodeAt(i);
+    }
+    return outputArray;
+  };
+
+  const togglePushNotifications = async () => {
+    if (!('serviceWorker' in navigator) || !('PushManager' in window)) {
+      alert('Push notifications are not supported in this browser.');
+      return;
+    }
+
+    try {
+      const permission = await Notification.requestPermission();
+      if (permission !== 'granted') {
+        alert('Notification permission denied.');
+        return;
+      }
+
+      const reg = await navigator.serviceWorker.ready;
+      const existingSubscription = await reg.pushManager.getSubscription();
+
+      if (existingSubscription) {
+        await existingSubscription.unsubscribe();
+        setPushNotificationEnabled(false);
+      } else {
+        const keyRes = await fetch('/api/notifications/vapid-public-key');
+        const keyData = await keyRes.json();
+        if (!keyData.success || !keyData.publicKey) {
+          throw new Error(keyData.message || 'Failed to fetch public VAPID key');
+        }
+
+        const convertedKey = urlBase64ToUint8Array(keyData.publicKey);
+        const newSubscription = await reg.pushManager.subscribe({
+          userVisibleOnly: true,
+          applicationServerKey: convertedKey
+        });
+
+        const res = await fetch('/api/notifications/subscribe', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(newSubscription)
+        });
+
+        const data = await res.json();
+        if (data.success) {
+          setPushNotificationEnabled(true);
+        } else {
+          throw new Error(data.message || 'Subscription failed on backend');
+        }
+      }
+    } catch (err) {
+      console.error('Failed to toggle push notifications:', err);
+      alert(`Push subscription error: ${err.message}`);
+    }
+  };
 
   // Sync dark mode class
   useEffect(() => {
@@ -395,6 +472,24 @@ const App = () => {
                 </div>
                 <div className={`w-10 h-6 rounded-full p-1 transition-colors ${isDarkMode ? 'bg-indigo-500' : 'bg-slate-300'}`}>
                   <div className={`w-4 h-4 rounded-full bg-white transition-transform ${isDarkMode ? 'translate-x-4' : 'translate-x-0'}`} />
+                </div>
+              </button>
+            </div>
+
+            <div className="mb-6">
+              <p className="text-xs font-semibold text-slate-400 mb-3 uppercase tracking-wider">Notifications</p>
+              <button 
+                onClick={togglePushNotifications}
+                className="w-full flex items-center justify-between p-3 rounded-xl bg-slate-50 dark:bg-slate-800/50 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
+              >
+                <div className="flex items-center gap-3">
+                  <Bell size={20} className={pushNotificationEnabled ? 'text-emerald-500' : 'text-slate-400'} />
+                  <span className="font-medium text-sm text-slate-700 dark:text-slate-200">
+                    Push Alerts
+                  </span>
+                </div>
+                <div className={`w-10 h-6 rounded-full p-1 transition-colors ${pushNotificationEnabled ? 'bg-emerald-500' : 'bg-slate-300'}`}>
+                  <div className={`w-4 h-4 rounded-full bg-white transition-transform ${pushNotificationEnabled ? 'translate-x-4' : 'translate-x-0'}`} />
                 </div>
               </button>
             </div>
