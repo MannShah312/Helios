@@ -25,7 +25,7 @@ const mockQuickAccess = [
 ];
 
 const App = () => {
-  const [currentView, setCurrentView] = useState('upload'); // 'upload', 'processing', 'list', 'details'
+  const [currentView, setCurrentView] = useState('upload'); // 'upload', 'processing', 'list', 'details', 'weekly-revision'
   const [isDarkMode, setIsDarkMode] = useState(false);
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [selectedFile, setSelectedFile] = useState(null);
@@ -38,6 +38,10 @@ const App = () => {
   const [datesList, setDatesList] = useState([]);
   const [errorMsg, setErrorMsg] = useState(null);
   const [processingStep, setProcessingStep] = useState(0);
+
+  // Weekly Revision States
+  const [weeklyRevisionStats, setWeeklyRevisionStats] = useState({ completed: 0, total: 0, remaining: 0 });
+  const [weeklyRevision, setWeeklyRevision] = useState(null);
 
   // Real Streak and Goals States
   const [readStatus, setReadStatus] = useState(() => {
@@ -145,6 +149,7 @@ const App = () => {
     const todayStr = getLocalDateStr(0);
     setActiveDate(todayStr);
     fetchDateData(todayStr);
+    fetchWeeklyRevisionStats();
   }, []);
 
   const toggleTheme = () => setIsDarkMode(!isDarkMode);
@@ -192,6 +197,69 @@ const App = () => {
       }
     } catch (err) {
       console.error('Error fetching uploads metadata:', err);
+    }
+  };
+
+  const fetchWeeklyRevisionStats = async () => {
+    try {
+      const res = await fetch('/api/weekly-revision/current');
+      const json = await res.json();
+      if (json.success && json.data) {
+        const topics = json.data.topics || [];
+        const completed = topics.filter(t => t.completed).length;
+        const total = topics.length;
+        const remaining = total - completed;
+        setWeeklyRevisionStats({ completed, total, remaining });
+        setWeeklyRevision(json.data);
+      }
+    } catch (err) {
+      console.error('Error fetching weekly revision stats:', err);
+    }
+  };
+
+  const handleStartWeeklyRevision = async () => {
+    setCurrentView('weekly-revision');
+    setErrorMsg(null);
+    try {
+      const res = await fetch('/api/weekly-revision/current');
+      const json = await res.json();
+      if (json.success && json.data) {
+        setWeeklyRevision(json.data);
+        const topics = json.data.topics || [];
+        const completed = topics.filter(t => t.completed).length;
+        const total = topics.length;
+        const remaining = total - completed;
+        setWeeklyRevisionStats({ completed, total, remaining });
+      }
+    } catch (err) {
+      console.error('Failed to load weekly revision:', err);
+    }
+  };
+
+  const handleOpenTopicDetails = async (dateStr, topicNumber) => {
+    let caDoc = currentAffairs;
+    if (!caDoc || caDoc.date.split('T')[0] !== dateStr) {
+      try {
+        const res = await fetch(`/api/current-affairs/${dateStr}`);
+        const json = await res.json();
+        if (json.success && json.data) {
+          caDoc = json.data;
+          setCurrentAffairs(caDoc);
+        } else {
+          caDoc = null;
+        }
+      } catch (err) {
+        console.error(err);
+        caDoc = null;
+      }
+    }
+    if (caDoc) {
+      const topic = caDoc.topics.find(t => t.topicNumber === topicNumber);
+      if (topic) {
+        setActiveTopic(topic);
+        setActiveDate(dateStr);
+        setCurrentView('details');
+      }
     }
   };
 
@@ -500,6 +568,7 @@ const App = () => {
                {currentAffairs && (
                  <button onClick={() => { setCurrentView('list'); setIsMenuOpen(false); }} className="w-full text-left p-3 rounded-xl hover:bg-slate-50 dark:hover:bg-slate-800 text-slate-700 dark:text-slate-300 text-sm font-medium">Current Affairs</button>
                )}
+               <button onClick={() => { handleStartWeeklyRevision(); setIsMenuOpen(false); }} className="w-full text-left p-3 rounded-xl hover:bg-slate-50 dark:hover:bg-slate-800 text-slate-700 dark:text-slate-300 text-sm font-medium">Weekly Revision</button>
             </div>
           </div>
         </div>
@@ -592,7 +661,7 @@ const App = () => {
 
             return (
               <>
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 md:gap-6 mb-8">
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4 md:gap-6 mb-8">
                   <div className="bg-[#1A1F2E] dark:bg-slate-900 text-white rounded-[2rem] p-6 flex items-center justify-between shadow-xl shadow-blue-900/10 dark:shadow-none border border-transparent dark:border-slate-800 hover:-translate-y-1 transition-all">
                      <div className="flex items-center gap-4 md:gap-6">
                        <div className={`w-14 h-14 md:w-16 md:h-16 rounded-2xl flex items-center justify-center shrink-0 ${streakVal > 0 ? 'bg-orange-500/20 text-orange-500' : 'bg-slate-700/25 text-slate-500'}`}>
@@ -622,6 +691,27 @@ const App = () => {
                            {readCount} <span className="text-base md:text-lg font-medium text-slate-400 normal-case">/ {totalTopics} read</span>
                         </p>
                      </div>
+                  </div>
+
+                  <div className="bg-white dark:bg-slate-900 rounded-[2rem] p-6 flex flex-col justify-between shadow-[0_8px_30px_rgb(0,0,0,0.04)] border border-slate-100 dark:border-slate-800 hover:-translate-y-1 transition-all">
+                     <div className="flex items-center gap-4 md:gap-6 mb-4">
+                       <div className="w-14 h-14 rounded-2xl bg-amber-500/10 text-amber-500 flex items-center justify-center shrink-0 border border-amber-500/20">
+                         <RefreshCw size={28} />
+                       </div>
+                       <div>
+                          <p className="text-xs md:text-sm text-slate-500 dark:text-slate-400 font-semibold uppercase tracking-wider mb-1">Weekly Revision</p>
+                          <p className="text-xl md:text-2xl font-bold text-slate-900 dark:text-white leading-tight">
+                             {weeklyRevisionStats.completed}/{weeklyRevisionStats.total} completed
+                          </p>
+                          <p className="text-xs text-slate-400 mt-0.5">{weeklyRevisionStats.remaining} remaining</p>
+                       </div>
+                     </div>
+                     <button 
+                       onClick={() => handleStartWeeklyRevision()}
+                       className="w-full py-2.5 px-4 rounded-xl bg-orange-500 hover:bg-orange-600 text-white font-bold text-xs shadow-md shadow-orange-500/20 transition-all flex items-center justify-center gap-1.5"
+                     >
+                       Continue Revision <ArrowRight size={14} />
+                     </button>
                   </div>
                 </div>
 
@@ -763,7 +853,13 @@ const App = () => {
                  <button 
                    key={item.id}
                    disabled={item.title === 'Current Affairs' && !currentAffairs}
-                   onClick={() => item.title === 'Current Affairs' && setCurrentView('list')}
+                   onClick={() => {
+                     if (item.title === 'Current Affairs') {
+                       setCurrentView('list');
+                     } else if (item.title === 'Revision') {
+                       handleStartWeeklyRevision();
+                     }
+                   }}
                    className="bg-white dark:bg-slate-900 rounded-2xl p-4 md:p-5 flex flex-col items-center justify-center text-center shadow-[0_4px_20px_rgb(0,0,0,0.03)] border border-slate-100 dark:border-slate-800 hover:-translate-y-1 transition-all group disabled:opacity-50 disabled:cursor-not-allowed"
                  >
                    <div className={`w-12 h-12 rounded-2xl ${item.bg} ${item.color} flex items-center justify-center mb-3 group-hover:scale-110 transition-transform`}>
@@ -1224,12 +1320,239 @@ const App = () => {
     );
   };
 
+  const WeeklyRevisionScreen = () => {
+    const [generating, setGenerating] = useState(false);
+
+    const handleToggleTopic = async (topicId) => {
+      try {
+        const res = await fetch(`/api/weekly-revision/${weeklyRevision._id}/topics/${topicId}/toggle`, {
+          method: 'PATCH'
+        });
+        const json = await res.json();
+        if (json.success && json.data) {
+          setWeeklyRevision(json.data);
+          const topics = json.data.topics || [];
+          const completed = topics.filter(t => t.completed).length;
+          const total = topics.length;
+          const remaining = total - completed;
+          setWeeklyRevisionStats({ completed, total, remaining });
+        }
+      } catch (err) {
+        console.error('Failed to toggle completion status:', err);
+      }
+    };
+
+    const handleGenerate = async () => {
+      setGenerating(true);
+      try {
+        const res = await fetch('/api/weekly-revision/generate', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ force: true })
+        });
+        const json = await res.json();
+        if (json.success && json.data) {
+          setWeeklyRevision(json.data);
+          const topics = json.data.topics || [];
+          const completed = topics.filter(t => t.completed).length;
+          const total = topics.length;
+          const remaining = total - completed;
+          setWeeklyRevisionStats({ completed, total, remaining });
+        } else {
+          alert(json.message || 'Failed to generate weekly revision');
+        }
+      } catch (err) {
+        console.error(err);
+        alert('Failed to generate weekly revision');
+      } finally {
+        setGenerating(false);
+      }
+    };
+
+    const formatDateRange = (start, end) => {
+      if (!start || !end) return '';
+      const s = new Date(start);
+      const e = new Date(end);
+      const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+      return `${s.getDate()} ${months[s.getMonth()]} - ${e.getDate()} ${months[e.getMonth()]} ${e.getFullYear()}`;
+    };
+
+    const topics = weeklyRevision?.topics || [];
+    const completedCount = weeklyRevisionStats.completed;
+    const totalCount = weeklyRevisionStats.total;
+    const remainingCount = weeklyRevisionStats.remaining;
+    const percent = totalCount > 0 ? Math.round((completedCount / totalCount) * 100) : 0;
+
+    return (
+      <div className="flex-1 flex flex-col min-h-screen bg-[#F8FAFC] dark:bg-[#0B1120] transition-colors">
+        <Header showBack={true} onBack={() => setCurrentView('upload')} />
+        
+        <main className="flex-1 max-w-5xl w-full mx-auto p-4 md:p-6 pb-24">
+          <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 mb-8">
+            <div>
+              <h2 className="text-2xl md:text-3xl font-extrabold text-slate-900 dark:text-white tracking-tight">Weekly Revision</h2>
+              <p className="text-sm font-semibold text-orange-500 uppercase tracking-wider mt-1">
+                {weeklyRevision ? formatDateRange(weeklyRevision.startDate, weeklyRevision.endDate) : 'Previous Week'}
+              </p>
+            </div>
+            
+            {topics.length === 0 && !generating && (
+              <button 
+                onClick={handleGenerate}
+                className="py-3 px-5 rounded-xl bg-orange-500 hover:bg-orange-600 text-white font-bold text-sm shadow-lg shadow-orange-500/20 active:scale-95 transition-all flex items-center gap-2"
+              >
+                <RefreshCw size={16} /> Generate Revision Now
+              </button>
+            )}
+          </div>
+
+          {generating ? (
+            <div className="text-center py-20 bg-white dark:bg-slate-900 rounded-3xl border border-slate-100 dark:border-slate-800 shadow-sm">
+              <RefreshCw size={48} className="mx-auto mb-4 text-orange-500 animate-spin" />
+              <h4 className="text-lg font-bold text-slate-900 dark:text-white mb-2">Transforming Week's Content</h4>
+              <p className="text-sm text-slate-500 dark:text-slate-400 max-w-xs mx-auto">Gemini is synthesizing last week's Current Affairs into high-yield revision cards...</p>
+            </div>
+          ) : topics.length === 0 ? (
+            <div className="text-center py-16 bg-white dark:bg-slate-900 rounded-3xl border border-slate-100 dark:border-slate-800 shadow-sm">
+              <BookOpen size={48} className="mx-auto mb-4 text-slate-350 dark:text-slate-700" />
+              <h4 className="text-lg font-bold text-slate-900 dark:text-white mb-2">No Weekly Revision Found</h4>
+              <p className="text-sm text-slate-500 dark:text-slate-400 max-w-sm mx-auto mb-6">We couldn't find current affairs for the previous week in the database. Ensure you have processed some newspaper snapshots first!</p>
+            </div>
+          ) : (
+            <div className="flex flex-col gap-6">
+              {/* Progress Panel */}
+              <div className="bg-[#1A1F2E] dark:bg-slate-900 text-white rounded-[2rem] p-6 md:p-8 shadow-xl border border-transparent dark:border-slate-800 flex flex-col md:flex-row gap-6 justify-between items-center">
+                <div className="w-full md:w-1/3 flex flex-col gap-1">
+                  <span className="text-xs uppercase font-bold tracking-widest text-slate-400">Progress</span>
+                  <div className="flex items-baseline gap-2">
+                    <span className="text-4xl font-extrabold text-white">{completedCount}</span>
+                    <span className="text-lg font-medium text-slate-400">/ {totalCount} completed</span>
+                  </div>
+                  <span className="text-xs font-semibold text-slate-400">{remainingCount} remaining</span>
+                </div>
+                
+                <div className="w-full md:flex-1 flex flex-col gap-3">
+                  <div className="flex justify-between text-sm font-bold">
+                    <span>Completion Rate</span>
+                    <span className="text-orange-400">{percent}%</span>
+                  </div>
+                  <div className="w-full h-3 bg-slate-800 rounded-full overflow-hidden">
+                    <div 
+                      className="h-full bg-gradient-to-r from-orange-500 to-amber-400 transition-all duration-500" 
+                      style={{ width: `${percent}%` }}
+                    />
+                  </div>
+                </div>
+              </div>
+
+              {/* Revision Cards Grid */}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                {topics.map((topic) => (
+                  <div 
+                    key={topic._id} 
+                    className={`bg-white dark:bg-slate-900 rounded-3xl p-6 border transition-all flex flex-col justify-between group shadow-sm ${
+                      topic.completed 
+                        ? 'border-emerald-500/30 dark:border-emerald-500/20 bg-emerald-50/5 dark:bg-emerald-950/5' 
+                        : 'border-slate-200/60 dark:border-slate-800 hover:border-slate-350 dark:hover:border-slate-700 hover:shadow-md'
+                    }`}
+                  >
+                    <div>
+                      {/* Badges */}
+                      <div className="flex justify-between items-start mb-4 gap-2">
+                        <div className="flex items-center gap-2 flex-wrap">
+                          <span className="text-[10px] uppercase font-bold tracking-wider text-blue-600 dark:text-blue-400 bg-blue-50 dark:bg-blue-900/20 px-2.5 py-1 rounded-md">
+                            {topic.classification.gsPaper}
+                          </span>
+                          <span className="text-[10px] uppercase font-bold tracking-wider text-orange-600 dark:text-orange-400 bg-orange-50 dark:bg-orange-900/20 px-2.5 py-1 rounded-md">
+                            {topic.classification.subject}
+                          </span>
+                        </div>
+                        
+                        <span className={`text-[10px] font-bold px-2 py-0.5 rounded ${
+                          topic.importance === 'HIGH' 
+                            ? 'bg-red-50 text-red-600 dark:bg-red-900/20 dark:text-red-400' 
+                            : topic.importance === 'MEDIUM' 
+                            ? 'bg-amber-50 text-amber-600 dark:bg-amber-900/20 dark:text-amber-400' 
+                            : 'bg-blue-50 text-blue-600 dark:bg-blue-900/20 dark:text-blue-400'
+                        }`}>
+                          {topic.importance}
+                        </span>
+                      </div>
+
+                      {/* Title (clickable to detailed mains page) */}
+                      <h4 
+                        onClick={() => handleOpenTopicDetails(topic.currentAffairsDate.split('T')[0], topic.currentAffairsTopicNumber)}
+                        className="text-lg font-bold text-slate-900 dark:text-white mb-3 leading-snug cursor-pointer group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors flex items-center gap-1"
+                      >
+                        {topic.title}
+                        <ArrowUpRight size={16} className="opacity-0 group-hover:opacity-100 transition-opacity" />
+                      </h4>
+
+                      {/* Summary */}
+                      <p className="text-sm text-slate-600 dark:text-slate-400 leading-relaxed mb-4">
+                        {topic.revisionSummary}
+                      </p>
+
+                      {/* Why it Matters */}
+                      <div className="mb-4 bg-slate-50 dark:bg-slate-950/40 p-3.5 rounded-2xl border border-slate-100 dark:border-slate-800 text-xs">
+                        <span className="font-bold text-slate-800 dark:text-slate-200 block mb-1">Why it matters for UPSC:</span>
+                        <p className="text-slate-500 dark:text-slate-400 leading-relaxed">{topic.whyItMatters}</p>
+                      </div>
+
+                      {/* Facts & Keywords */}
+                      {topic.factsKeywords && topic.factsKeywords.length > 0 && (
+                        <div className="flex gap-1.5 flex-wrap mb-6">
+                          {topic.factsKeywords.map((kw, i) => (
+                            <span key={i} className="text-[10px] font-semibold bg-slate-100 dark:bg-slate-850 text-slate-500 dark:text-slate-400 px-2 py-0.5 rounded">
+                              #{kw}
+                            </span>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+
+                    {/* Footer Actions */}
+                    <div className="flex items-center justify-between pt-4 border-t border-slate-100 dark:border-slate-800/60 mt-auto">
+                      <label className="flex items-center gap-2.5 cursor-pointer select-none">
+                        <input 
+                          type="checkbox" 
+                          checked={!!topic.completed} 
+                          onChange={() => handleToggleTopic(topic._id)}
+                          className="w-4 h-4 text-orange-500 border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-950 rounded focus:ring-orange-500 focus:ring-2 cursor-pointer transition-all"
+                        />
+                        <span className={`text-xs font-bold ${
+                          topic.completed 
+                            ? 'text-emerald-600 dark:text-emerald-400' 
+                            : 'text-slate-500 dark:text-slate-400'
+                        }`}>
+                          {topic.completed ? 'Completed' : 'Mark Complete'}
+                        </span>
+                      </label>
+                      
+                      <button 
+                        onClick={() => handleOpenTopicDetails(topic.currentAffairsDate.split('T')[0], topic.currentAffairsTopicNumber)}
+                        className="py-1.5 px-3 rounded-lg bg-slate-50 hover:bg-slate-100 dark:bg-slate-800 dark:hover:bg-slate-750 text-slate-600 dark:text-slate-300 font-bold text-xs flex items-center gap-1 transition-colors border border-slate-200 dark:border-slate-700"
+                      >
+                        <BookOpen size={12} /> Mains Answer
+                      </button>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+        </main>
+      </div>
+    );
+  };
+
   return (
     <div className="min-h-screen flex flex-col font-sans bg-[#FFFDF9] dark:bg-[#0B1120] text-slate-900 dark:text-slate-100 selection:bg-orange-200 selection:text-orange-900 dark:selection:bg-orange-900 dark:selection:text-orange-100 transition-colors duration-200">
       {currentView === 'upload' && <UploadScreen />}
       {currentView === 'processing' && <ProcessingScreen />}
       {currentView === 'list' && <ListScreen />}
       {currentView === 'details' && <DetailsScreen />}
+      {currentView === 'weekly-revision' && <WeeklyRevisionScreen />}
       
       <MenuModal />
     </div>

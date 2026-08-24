@@ -1,0 +1,2063 @@
+{
+  "exam": "UPSC Civil Services Examination",
+  "version": "1.0",
+  "subjects": [
+    {
+      "id": "gs1-history",
+      "name": "History",
+      "paper": "GS1",
+      "chapters": [
+        {
+          "id": "ancient-history",
+          "name": "Ancient History",
+          "topics": [
+            {
+              "id": "prehistoric-india",
+              "name": "Prehistoric India",
+              "subtopics": [
+                "Paleolithic Age",
+                "Mesolithic Age",
+                "Neolithic Age",
+                "Chalcolithic Age",
+                "Megalithic Cultures",
+                "Rock Art",
+                "Early Agriculture",
+                "Early Settlements"
+              ]
+            },
+            {
+              "id": "indus-valley-civilization",
+              "name": "Indus Valley Civilization",
+              "subtopics": [
+                "Origin and Extent",
+                "Major Sites",
+                "Town Planning",
+                "Drainage System",
+                "Architecture",
+                "Agriculture",
+                "Trade and Commerce",
+                "Craft Production",
+                "Indus Script",
+                "Religion and Beliefs",
+                "Social Organization",
+                "Political Organization",
+                "Economy",
+                "Technology",
+                "Art and Sculpture",
+                "Seals",
+                "Burial Practices",
+                "Decline of Harappan Civilization",
+                "Regional Cultures"
+              ]
+            },
+            {
+              "id": "vedic-age",
+              "name": "Vedic Age",
+              "subtopics": [
+                "Early Vedic Age",
+                "Later Vedic Age",
+                "Rig Vedic Society",
+                "Political Institutions",
+                "Sabha and Samiti",
+                "Vedic Economy",
+                "Religion",
+                "Varna System",
+                "Position of Women",
+                "Expansion into Gangetic Plains",
+                "Iron Technology",
+                "Vedic Literature"
+              ]
+            },
+            {
+              "id": "mahajanapadas",
+              "name": "Mahajanapadas",
+              "subtopics": [
+                "Sixteen Mahajanapadas",
+                "Rise of Magadha",
+                "Haryanka Dynasty",
+                "Shishunaga Dynasty",
+                "Nanda Dynasty",
+                "Republican States",
+                "Second Urbanization",
+                "Trade and Guilds"
+              ]
+            },
+            {
+              "id": "buddhism",
+              "name": "Buddhism",
+              "subtopics": [
+                "Life of Buddha",
+                "Four Noble Truths",
+                "Eightfold Path",
+                "Middle Path",
+                "Buddhist Councils",
+                "Theravada",
+                "Mahayana",
+                "Vajrayana",
+                "Buddhist Literature",
+                "Spread of Buddhism",
+                "Buddhist Art",
+                "Buddhist Architecture",
+                "Decline of Buddhism"
+              ]
+            },
+            {
+              "id": "jainism",
+              "name": "Jainism",
+              "subtopics": [
+                "Life of Mahavira",
+                "Jain Philosophy",
+                "Triratna",
+                "Ahimsa",
+                "Digambara",
+                "Svetambara",
+                "Jain Councils",
+                "Jain Literature",
+                "Spread of Jainism",
+                "Contribution to Indian Culture"
+              ]
+            },
+            {
+              "id": "mauryan-empire",
+              "name": "Mauryan Empire",
+              "subtopics": [
+                "Chandragupta Maurya",
+                "Ashoka",
+                "Mauryan Administration",
+                "Arthashastra",
+                "Dhamma",
+                "Ashokan Edicts",
+                "Mauryan Economy",
+                "Mauryan Society",
+                "Mauryan Art",
+                "Stupas",
+                "Pillars",
+                "Decline of Mauryan Empire"
+              ]
+            },
+            {
+              "id": "post-mauryan",
+              "name": "Post-Mauryan India",
+              "subtopics": [
+                "Indo-Greeks",
+                "Shakas",
+                "Parthians",
+                "Kushanas",
+                "Kanishka",
+                "Satavahanas",
+                "Sangam Age",
+                "Trade Networks",
+                "Roman Trade",
+                "Silk Route",
+                "Gandhara Art",
+                "Mathura Art",
+                "Amaravati Art"
+              ]
+            },
+            {
+              "id": "gupta-period",
+              "name": "Gupta Period",
+              "subtopics": [
+                "Gupta Rulers",
+                "Administration",
+                "Economy",
+                "Society",
+                "Religion",
+                "Science",
+                "Mathematics",
+                "Astronomy",
+                "Literature",
+                "Sanskrit",
+                "Art and Architecture",
+                "Temple Architecture",
+                "Gupta Coins",
+                "Decline of Gupta Empire"
+              ]
+            }
+          ]
+        },
+        {
+          "id": "medieval-history",
+          "name": "Medieval History",
+          "topics": [
+            {
+              "id": "delhi-sultanate",
+              "name": "Delhi Sultanate",
+              "subtopics": [
+                "Slave Dynasty",
+                "Khalji Dynasty",
+                "Tughlaq Dynasty",
+                "Sayyid Dynasty",
+                "Lodi Dynasty",
+                "Administration",
+                "Iqta System",
+                "Military System",
+                "Economy",
+                "Architecture",
+                "Persian Culture"
+              ]
+            },
+            {
+              "id": "mughal-empire",
+              "name": "Mughal Empire",
+              "subtopics": [
+                "Babur",
+                "Humayun",
+                "Akbar",
+                "Jahangir",
+                "Shah Jahan",
+                "Aurangzeb",
+                "Mughal Administration",
+                "Mansabdari System",
+                "Jagirdari System",
+                "Revenue System",
+                "Akbar's Religious Policy",
+                "Mughal Economy",
+                "Trade",
+                "Architecture",
+                "Painting",
+                "Literature",
+                "Decline of Mughal Empire"
+              ]
+            },
+            {
+              "id": "bhakti-movement",
+              "name": "Bhakti Movement",
+              "subtopics": [
+                "Alvars",
+                "Nayanars",
+                "Kabir",
+                "Guru Nanak",
+                "Mirabai",
+                "Tulsidas",
+                "Surdas",
+                "Chaitanya",
+                "Sufi-Bhakti Interaction",
+                "Social Impact"
+              ]
+            },
+            {
+              "id": "sufism",
+              "name": "Sufism",
+              "subtopics": [
+                "Major Sufi Orders",
+                "Chishti Order",
+                "Suhrawardi Order",
+                "Sufi Philosophy",
+                "Sufi Institutions",
+                "Social Influence"
+              ]
+            },
+            {
+              "id": "vijayanagara",
+              "name": "Vijayanagara Empire",
+              "subtopics": [
+                "Foundation",
+                "Administration",
+                "Economy",
+                "Trade",
+                "Society",
+                "Religion",
+                "Architecture",
+                "Hampi",
+                "Decline"
+              ]
+            },
+            {
+              "id": "marathas",
+              "name": "Marathas",
+              "subtopics": [
+                "Shivaji",
+                "Administration",
+                "Ashtapradhan",
+                "Military System",
+                "Maratha Confederacy",
+                "Peshwas",
+                "Expansion",
+                "Anglo-Maratha Relations"
+              ]
+            }
+          ]
+        },
+        {
+          "id": "modern-history",
+          "name": "Modern History",
+          "topics": [
+            {
+              "id": "european-expansion",
+              "name": "European Expansion",
+              "subtopics": [
+                "Portuguese",
+                "Dutch",
+                "English",
+                "French",
+                "Carnatic Wars",
+                "British Territorial Expansion"
+              ]
+            },
+            {
+              "id": "british-expansion",
+              "name": "British Expansion",
+              "subtopics": [
+                "Battle of Plassey",
+                "Battle of Buxar",
+                "Subsidiary Alliance",
+                "Doctrine of Lapse",
+                "Anglo-Mysore Wars",
+                "Anglo-Maratha Wars",
+                "Anglo-Sikh Wars"
+              ]
+            },
+            {
+              "id": "economic-impact-british",
+              "name": "Economic Impact of British Rule",
+              "subtopics": [
+                "Drain of Wealth",
+                "Deindustrialization",
+                "Permanent Settlement",
+                "Ryotwari System",
+                "Mahalwari System",
+                "Commercialization of Agriculture",
+                "Famines",
+                "Plantation Economy",
+                "Railways",
+                "Modern Industries"
+              ]
+            },
+            {
+              "id": "social-religious-reform",
+              "name": "Social and Religious Reform",
+              "subtopics": [
+                "Brahmo Samaj",
+                "Arya Samaj",
+                "Prarthana Samaj",
+                "Ramakrishna Mission",
+                "Aligarh Movement",
+                "Theosophical Society",
+                "Satyashodhak Samaj",
+                "Women's Education",
+                "Caste Reform",
+                "Religious Reform"
+              ]
+            },
+            {
+              "id": "revolt-1857",
+              "name": "Revolt of 1857",
+              "subtopics": [
+                "Causes",
+                "Major Centres",
+                "Leaders",
+                "Nature of Revolt",
+                "British Response",
+                "Consequences",
+                "Historical Interpretations"
+              ]
+            },
+            {
+              "id": "national-movement",
+              "name": "Indian National Movement",
+              "subtopics": [
+                "Formation of INC",
+                "Moderates",
+                "Extremists",
+                "Swadeshi Movement",
+                "Surat Split",
+                "Home Rule Movement",
+                "Revolutionary Movements",
+                "Gandhian Era"
+              ]
+            },
+            {
+              "id": "gandhian-movements",
+              "name": "Gandhian Movements",
+              "subtopics": [
+                "Champaran Satyagraha",
+                "Kheda Satyagraha",
+                "Ahmedabad Mill Strike",
+                "Non-Cooperation Movement",
+                "Civil Disobedience Movement",
+                "Salt Satyagraha",
+                "Quit India Movement",
+                "Constructive Programme",
+                "Gandhian Philosophy"
+              ]
+            },
+            {
+              "id": "constitutional-development",
+              "name": "Constitutional Development",
+              "subtopics": [
+                "Morley-Minto Reforms",
+                "Montagu-Chelmsford Reforms",
+                "Government of India Act 1935",
+                "Simon Commission",
+                "Round Table Conferences",
+                "Cripps Mission",
+                "Cabinet Mission",
+                "Indian Independence Act"
+              ]
+            },
+            {
+              "id": "partition-independence",
+              "name": "Partition and Independence",
+              "subtopics": [
+                "Communal Politics",
+                "Muslim League",
+                "Two-Nation Theory",
+                "Cabinet Mission",
+                "Partition",
+                "Independence",
+                "Integration Challenges"
+              ]
+            }
+          ]
+        }
+      ]
+    },
+
+    {
+      "id": "gs1-art-culture",
+      "name": "Art & Culture",
+      "paper": "GS1",
+      "chapters": [
+        {
+          "id": "architecture",
+          "name": "Architecture",
+          "topics": [
+            {
+              "id": "temple-architecture",
+              "name": "Temple Architecture",
+              "subtopics": [
+                "Nagara Style",
+                "Dravida Style",
+                "Vesara Style",
+                "Rock-Cut Architecture",
+                "Cave Temples",
+                "Temple Sculptures"
+              ]
+            },
+            {
+              "id": "buddhist-architecture",
+              "name": "Buddhist Architecture",
+              "subtopics": [
+                "Stupas",
+                "Chaityas",
+                "Viharas",
+                "Ashokan Pillars",
+                "Buddhist Cave Architecture"
+              ]
+            },
+            {
+              "id": "indo-islamic",
+              "name": "Indo-Islamic Architecture",
+              "subtopics": [
+                "Sultanate Architecture",
+                "Mughal Architecture",
+                "Indo-Saracenic Architecture",
+                "Arches",
+                "Domes",
+                "Minarets"
+              ]
+            }
+          ]
+        },
+        {
+          "id": "performing-arts",
+          "name": "Performing Arts",
+          "topics": [
+            {
+              "id": "classical-dance",
+              "name": "Classical Dance",
+              "subtopics": [
+                "Bharatanatyam",
+                "Kathak",
+                "Kathakali",
+                "Kuchipudi",
+                "Odissi",
+                "Manipuri",
+                "Mohiniyattam",
+                "Sattriya"
+              ]
+            },
+            {
+              "id": "music",
+              "name": "Indian Music",
+              "subtopics": [
+                "Hindustani Music",
+                "Carnatic Music",
+                "Gharanas",
+                "Musical Instruments",
+                "Folk Music"
+              ]
+            },
+            {
+              "id": "folk-arts",
+              "name": "Folk Arts",
+              "subtopics": [
+                "Folk Dances",
+                "Folk Theatre",
+                "Puppetry",
+                "Traditional Performances"
+              ]
+            }
+          ]
+        },
+        {
+          "id": "literature",
+          "name": "Literature and Languages",
+          "topics": [
+            {
+              "id": "indian-literature",
+              "name": "Indian Literature",
+              "subtopics": [
+                "Vedic Literature",
+                "Sangam Literature",
+                "Buddhist Literature",
+                "Jain Literature",
+                "Sanskrit Literature",
+                "Persian Literature",
+                "Regional Literature",
+                "Modern Indian Literature"
+              ]
+            },
+            {
+              "id": "languages",
+              "name": "Indian Languages",
+              "subtopics": [
+                "Language Families",
+                "Classical Languages",
+                "Scheduled Languages",
+                "Language Movements",
+                "Language Preservation"
+              ]
+            }
+          ]
+        }
+      ]
+    },
+
+    {
+      "id": "gs1-geography",
+      "name": "Geography",
+      "paper": "GS1",
+      "chapters": [
+        {
+          "id": "physical-geography",
+          "name": "Physical Geography",
+          "topics": [
+            {
+              "id": "geomorphology",
+              "name": "Geomorphology",
+              "subtopics": [
+                "Earth's Interior",
+                "Rocks",
+                "Plate Tectonics",
+                "Continental Drift",
+                "Earthquakes",
+                "Volcanoes",
+                "Mountains",
+                "Plateaus",
+                "Plains",
+                "Weathering",
+                "Erosion",
+                "Deposition",
+                "River Landforms",
+                "Glacial Landforms",
+                "Coastal Landforms",
+                "Karst Topography"
+              ]
+            },
+            {
+              "id": "climatology",
+              "name": "Climatology",
+              "subtopics": [
+                "Atmosphere",
+                "Atmospheric Layers",
+                "Temperature",
+                "Pressure Belts",
+                "Winds",
+                "Jet Streams",
+                "Air Masses",
+                "Fronts",
+                "Cyclones",
+                "Anticyclones",
+                "Monsoon",
+                "El Niño",
+                "La Niña",
+                "ENSO",
+                "Western Disturbances"
+              ]
+            },
+            {
+              "id": "oceanography",
+              "name": "Oceanography",
+              "subtopics": [
+                "Ocean Relief",
+                "Ocean Temperature",
+                "Salinity",
+                "Ocean Currents",
+                "Waves",
+                "Tides",
+                "Marine Resources",
+                "Coral Reefs",
+                "Ocean Acidification",
+                "Blue Economy"
+              ]
+            }
+          ]
+        },
+        {
+          "id": "indian-geography",
+          "name": "Indian Geography",
+          "topics": [
+            {
+              "id": "physiographic-divisions",
+              "name": "Physiographic Divisions",
+              "subtopics": [
+                "Himalayas",
+                "Northern Plains",
+                "Peninsular Plateau",
+                "Indian Desert",
+                "Coastal Plains",
+                "Islands"
+              ]
+            },
+            {
+              "id": "indian-rivers",
+              "name": "Indian Rivers",
+              "subtopics": [
+                "Himalayan Rivers",
+                "Peninsular Rivers",
+                "River Systems",
+                "River Interlinking",
+                "Floods",
+                "Droughts",
+                "Inter-State River Disputes",
+                "Groundwater"
+              ]
+            },
+            {
+              "id": "indian-climate",
+              "name": "Indian Climate",
+              "subtopics": [
+                "Indian Monsoon",
+                "Rainfall Patterns",
+                "Western Disturbances",
+                "Cyclones",
+                "Drought",
+                "Heat Waves",
+                "Climate Variability"
+              ]
+            },
+            {
+              "id": "resources",
+              "name": "Natural Resources",
+              "subtopics": [
+                "Minerals",
+                "Coal",
+                "Petroleum",
+                "Natural Gas",
+                "Renewable Energy",
+                "Water Resources",
+                "Forest Resources"
+              ]
+            },
+            {
+              "id": "agriculture-geography",
+              "name": "Agriculture",
+              "subtopics": [
+                "Cropping Patterns",
+                "Irrigation",
+                "Green Revolution",
+                "Food Security",
+                "Agricultural Regions",
+                "Commercial Crops",
+                "Horticulture",
+                "Animal Husbandry",
+                "Fisheries"
+              ]
+            }
+          ]
+        },
+        {
+          "id": "world-geography",
+          "name": "World Geography",
+          "topics": [
+            {
+              "id": "world-regions",
+              "name": "Major World Regions",
+              "subtopics": [
+                "Continents",
+                "Major Mountain Systems",
+                "Major Rivers",
+                "Deserts",
+                "Climate Regions",
+                "Natural Resources",
+                "Agricultural Regions",
+                "Industrial Regions"
+              ]
+            },
+            {
+              "id": "important-geographical-features",
+              "name": "Important Geographical Features",
+              "subtopics": [
+                "Important Straits",
+                "Important Seas",
+                "Important Canals",
+                "Important Gulfs",
+                "Important Islands",
+                "Geopolitical Geography"
+              ]
+            }
+          ]
+        }
+      ]
+    },
+
+    {
+      "id": "gs1-society",
+      "name": "Indian Society",
+      "paper": "GS1",
+      "chapters": [
+        {
+          "id": "social-structure",
+          "name": "Social Structure",
+          "topics": [
+            {
+              "id": "diversity",
+              "name": "Diversity",
+              "subtopics": [
+                "Unity in Diversity",
+                "Caste",
+                "Class",
+                "Tribes",
+                "Religion",
+                "Language",
+                "Regionalism",
+                "Communalism",
+                "Secularism"
+              ]
+            },
+            {
+              "id": "women",
+              "name": "Women",
+              "subtopics": [
+                "Women's Empowerment",
+                "Gender Inequality",
+                "Women's Education",
+                "Women's Health",
+                "Female Labour Force Participation",
+                "Political Representation",
+                "Violence Against Women",
+                "Women-led Development"
+              ]
+            },
+            {
+              "id": "population",
+              "name": "Population",
+              "subtopics": [
+                "Population Growth",
+                "Demographic Dividend",
+                "Ageing",
+                "Fertility",
+                "Migration",
+                "Internal Migration",
+                "Population Policies"
+              ]
+            },
+            {
+              "id": "urbanization",
+              "name": "Urbanization",
+              "subtopics": [
+                "Urban Growth",
+                "Slums",
+                "Urban Poverty",
+                "Smart Cities",
+                "Urban Governance",
+                "Urban Infrastructure",
+                "Urban Migration"
+              ]
+            },
+            {
+              "id": "globalization-society",
+              "name": "Globalization",
+              "subtopics": [
+                "Cultural Impact",
+                "Economic Impact",
+                "Social Impact",
+                "Technology and Society",
+                "Consumerism"
+              ]
+            }
+          ]
+        }
+      ]
+    },
+
+    {
+      "id": "gs2-polity",
+      "name": "Indian Polity",
+      "paper": "GS2",
+      "chapters": [
+        {
+          "id": "constitution",
+          "name": "Constitution",
+          "topics": [
+            {
+              "id": "constitutional-foundations",
+              "name": "Constitutional Foundations",
+              "subtopics": [
+                "Historical Background",
+                "Constituent Assembly",
+                "Making of Constitution",
+                "Preamble",
+                "Salient Features",
+                "Basic Structure",
+                "Constitutional Amendments",
+                "Federalism",
+                "Parliamentary System",
+                "Separation of Powers"
+              ]
+            },
+            {
+              "id": "fundamental-rights",
+              "name": "Fundamental Rights",
+              "subtopics": [
+                "Right to Equality",
+                "Right to Freedom",
+                "Right Against Exploitation",
+                "Freedom of Religion",
+                "Cultural and Educational Rights",
+                "Constitutional Remedies",
+                "Reasonable Restrictions",
+                "Article 14",
+                "Article 19",
+                "Article 21",
+                "Right to Privacy",
+                "Right to Education"
+              ]
+            },
+            {
+              "id": "dpsp-duties",
+              "name": "DPSP and Fundamental Duties",
+              "subtopics": [
+                "Directive Principles",
+                "Fundamental Duties",
+                "Relationship with Fundamental Rights",
+                "Welfare State",
+                "Social Justice"
+              ]
+            }
+          ]
+        },
+        {
+          "id": "executive",
+          "name": "Executive",
+          "topics": [
+            {
+              "id": "union-executive",
+              "name": "Union Executive",
+              "subtopics": [
+                "President",
+                "Vice President",
+                "Prime Minister",
+                "Council of Ministers",
+                "Cabinet",
+                "Attorney General",
+                "Executive Powers",
+                "Ordinance Power"
+              ]
+            },
+            {
+              "id": "state-executive",
+              "name": "State Executive",
+              "subtopics": [
+                "Governor",
+                "Chief Minister",
+                "State Council of Ministers",
+                "State Executive Powers"
+              ]
+            }
+          ]
+        },
+        {
+          "id": "legislature",
+          "name": "Legislature",
+          "topics": [
+            {
+              "id": "parliament",
+              "name": "Parliament",
+              "subtopics": [
+                "Lok Sabha",
+                "Rajya Sabha",
+                "Parliamentary Procedures",
+                "Bills",
+                "Money Bills",
+                "Finance Bills",
+                "Budget",
+                "Parliamentary Committees",
+                "Privileges",
+                "Anti-Defection",
+                "Parliamentary Control over Executive"
+              ]
+            },
+            {
+              "id": "state-legislature",
+              "name": "State Legislature",
+              "subtopics": [
+                "Legislative Assembly",
+                "Legislative Council",
+                "State Bills",
+                "State Budget",
+                "Legislative Committees"
+              ]
+            }
+          ]
+        },
+        {
+          "id": "judiciary",
+          "name": "Judiciary",
+          "topics": [
+            {
+              "id": "judicial-system",
+              "name": "Judicial System",
+              "subtopics": [
+                "Supreme Court",
+                "High Courts",
+                "Judicial Review",
+                "Judicial Activism",
+                "Public Interest Litigation",
+                "Writs",
+                "Judicial Appointments",
+                "Collegium System",
+                "Tribunals",
+                "Contempt of Court",
+                "Judicial Independence"
+              ]
+            }
+          ]
+        },
+        {
+          "id": "federalism",
+          "name": "Federalism",
+          "topics": [
+            {
+              "id": "centre-state-relations",
+              "name": "Centre-State Relations",
+              "subtopics": [
+                "Legislative Relations",
+                "Administrative Relations",
+                "Financial Relations",
+                "Inter-State Council",
+                "GST Council",
+                "Finance Commission",
+                "Governor",
+                "President's Rule",
+                "Cooperative Federalism",
+                "Competitive Federalism"
+              ]
+            }
+          ]
+        },
+        {
+          "id": "local-government",
+          "name": "Local Government",
+          "topics": [
+            {
+              "id": "panchayati-raj",
+              "name": "Panchayati Raj",
+              "subtopics": [
+                "73rd Constitutional Amendment",
+                "Gram Sabha",
+                "Panchayats",
+                "State Finance Commission",
+                "Devolution",
+                "Rural Local Government"
+              ]
+            },
+            {
+              "id": "urban-local-government",
+              "name": "Urban Local Government",
+              "subtopics": [
+                "74th Constitutional Amendment",
+                "Municipal Corporations",
+                "Municipalities",
+                "Urban Local Bodies",
+                "Urban Governance",
+                "Devolution"
+              ]
+            }
+          ]
+        },
+        {
+          "id": "constitutional-bodies",
+          "name": "Constitutional Bodies",
+          "topics": [
+            {
+              "id": "constitutional-institutions",
+              "name": "Constitutional Institutions",
+              "subtopics": [
+                "Election Commission",
+                "UPSC",
+                "Finance Commission",
+                "CAG",
+                "GST Council",
+                "National Commissions",
+                "Attorney General"
+              ]
+            }
+          ]
+        }
+      ]
+    },
+
+    {
+      "id": "gs2-governance",
+      "name": "Governance",
+      "paper": "GS2",
+      "chapters": [
+        {
+          "id": "good-governance",
+          "name": "Good Governance",
+          "topics": [
+            {
+              "id": "governance-principles",
+              "name": "Governance Principles",
+              "subtopics": [
+                "Transparency",
+                "Accountability",
+                "Citizen-Centric Governance",
+                "Public Service Delivery",
+                "Participation",
+                "Rule of Law",
+                "Responsiveness"
+              ]
+            }
+          ]
+        },
+        {
+          "id": "e-governance",
+          "name": "E-Governance",
+          "topics": [
+            {
+              "id": "digital-governance",
+              "name": "Digital Governance",
+              "subtopics": [
+                "E-Governance",
+                "Digital India",
+                "Direct Benefit Transfer",
+                "Aadhaar",
+                "Digital Public Infrastructure",
+                "Digital Service Delivery",
+                "Data Governance"
+              ]
+            }
+          ]
+        },
+        {
+          "id": "civil-society",
+          "name": "Civil Society",
+          "topics": [
+            {
+              "id": "civil-society-organizations",
+              "name": "Civil Society Organizations",
+              "subtopics": [
+                "NGOs",
+                "Self Help Groups",
+                "Pressure Groups",
+                "Community Participation",
+                "Social Movements",
+                "Voluntary Organizations"
+              ]
+            }
+          ]
+        }
+      ]
+    },
+
+    {
+      "id": "gs2-social-justice",
+      "name": "Social Justice",
+      "paper": "GS2",
+      "chapters": [
+        {
+          "id": "health",
+          "name": "Health",
+          "topics": [
+            {
+              "id": "public-health",
+              "name": "Public Health",
+              "subtopics": [
+                "Public Healthcare",
+                "Universal Health Coverage",
+                "Primary Healthcare",
+                "Health Insurance",
+                "Maternal Health",
+                "Child Health",
+                "Nutrition",
+                "Mental Health",
+                "Communicable Diseases",
+                "Non-Communicable Diseases"
+              ]
+            }
+          ]
+        },
+        {
+          "id": "education",
+          "name": "Education",
+          "topics": [
+            {
+              "id": "education-system",
+              "name": "Education System",
+              "subtopics": [
+                "School Education",
+                "Higher Education",
+                "National Education Policy",
+                "Digital Education",
+                "Skill Development",
+                "Vocational Education",
+                "Education Inequality"
+              ]
+            }
+          ]
+        },
+        {
+          "id": "vulnerable-groups",
+          "name": "Vulnerable Groups",
+          "topics": [
+            {
+              "id": "socially-vulnerable",
+              "name": "Socially Vulnerable Groups",
+              "subtopics": [
+                "SCs",
+                "STs",
+                "OBCs",
+                "Minorities",
+                "Women",
+                "Children",
+                "Elderly",
+                "Persons with Disabilities",
+                "Transgender Persons",
+                "Migrants"
+              ]
+            }
+          ]
+        },
+        {
+          "id": "welfare",
+          "name": "Welfare",
+          "topics": [
+            {
+              "id": "social-security",
+              "name": "Social Security",
+              "subtopics": [
+                "Food Security",
+                "Housing",
+                "Employment",
+                "Pensions",
+                "Financial Inclusion",
+                "Social Security Schemes",
+                "Skill Development"
+              ]
+            }
+          ]
+        }
+      ]
+    },
+
+    {
+      "id": "gs2-international-relations",
+      "name": "International Relations",
+      "paper": "GS2",
+      "chapters": [
+        {
+          "id": "indias-foreign-policy",
+          "name": "India's Foreign Policy",
+          "topics": [
+            {
+              "id": "foreign-policy-doctrines",
+              "name": "Foreign Policy Doctrines",
+              "subtopics": [
+                "Strategic Autonomy",
+                "Non-Alignment",
+                "Multi-Alignment",
+                "Neighbourhood First",
+                "Act East Policy",
+                "Think West",
+                "Indo-Pacific",
+                "Global South"
+              ]
+            }
+          ]
+        },
+        {
+          "id": "neighbourhood",
+          "name": "India and Neighbours",
+          "topics": [
+            {
+              "id": "neighbouring-countries",
+              "name": "Neighbouring Countries",
+              "subtopics": [
+                "Pakistan",
+                "China",
+                "Nepal",
+                "Bhutan",
+                "Bangladesh",
+                "Myanmar",
+                "Sri Lanka",
+                "Maldives",
+                "Afghanistan"
+              ]
+            }
+          ]
+        },
+        {
+          "id": "major-powers",
+          "name": "Relations with Major Powers",
+          "topics": [
+            {
+              "id": "bilateral-relations",
+              "name": "Bilateral Relations",
+              "subtopics": [
+                "India-US",
+                "India-Russia",
+                "India-EU",
+                "India-Japan",
+                "India-Australia",
+                "India-France",
+                "India-UK"
+              ]
+            }
+          ]
+        },
+        {
+          "id": "international-organizations",
+          "name": "International Organizations",
+          "topics": [
+            {
+              "id": "global-institutions",
+              "name": "Global Institutions",
+              "subtopics": [
+                "United Nations",
+                "UN Security Council",
+                "UN General Assembly",
+                "IMF",
+                "World Bank",
+                "WTO",
+                "WHO",
+                "ILO",
+                "UNESCO",
+                "FAO",
+                "UNDP"
+              ]
+            }
+          ]
+        },
+        {
+          "id": "international-groupings",
+          "name": "International Groupings",
+          "topics": [
+            {
+              "id": "multilateral-groupings",
+              "name": "Multilateral Groupings",
+              "subtopics": [
+                "G20",
+                "G7",
+                "BRICS",
+                "SCO",
+                "QUAD",
+                "ASEAN",
+                "SAARC",
+                "BIMSTEC",
+                "IORA",
+                "RCEP",
+                "Indo-Pacific Frameworks"
+              ]
+            }
+          ]
+        }
+      ]
+    },
+
+    {
+      "id": "gs3-economy",
+      "name": "Indian Economy",
+      "paper": "GS3",
+      "chapters": [
+        {
+          "id": "basic-economics",
+          "name": "Basic Economics",
+          "topics": [
+            {
+              "id": "national-income",
+              "name": "National Income",
+              "subtopics": [
+                "GDP",
+                "GNP",
+                "NNP",
+                "National Income",
+                "Per Capita Income",
+                "Real GDP",
+                "Nominal GDP",
+                "Economic Growth",
+                "Economic Development"
+              ]
+            }
+          ]
+        },
+        {
+          "id": "inflation",
+          "name": "Inflation",
+          "topics": [
+            {
+              "id": "price-indices",
+              "name": "Price Indices",
+              "subtopics": [
+                "CPI",
+                "WPI",
+                "Core Inflation",
+                "Food Inflation",
+                "Demand-Pull Inflation",
+                "Cost-Push Inflation",
+                "Inflation Targeting"
+              ]
+            }
+          ]
+        },
+        {
+          "id": "monetary-policy",
+          "name": "Monetary Policy",
+          "topics": [
+            {
+              "id": "rbi-policy-tools",
+              "name": "RBI and Monetary Policy",
+              "subtopics": [
+                "RBI",
+                "Monetary Policy Committee",
+                "Repo Rate",
+                "Reverse Repo",
+                "CRR",
+                "SLR",
+                "Open Market Operations",
+                "Liquidity",
+                "Monetary Transmission"
+              ]
+            }
+          ]
+        },
+        {
+          "id": "banking",
+          "name": "Banking",
+          "topics": [
+            {
+              "id": "banking-system",
+              "name": "Banking System",
+              "subtopics": [
+                "Commercial Banks",
+                "Public Sector Banks",
+                "Private Banks",
+                "Cooperative Banks",
+                "NBFCs",
+                "NPA",
+                "Basel Norms",
+                "Financial Stability",
+                "Banking Reforms"
+              ]
+            }
+          ]
+        },
+        {
+          "id": "fiscal-policy",
+          "name": "Fiscal Policy",
+          "topics": [
+            {
+              "id": "government-finance",
+              "name": "Government Finance",
+              "subtopics": [
+                "Government Expenditure",
+                "Taxation",
+                "Fiscal Deficit",
+                "Revenue Deficit",
+                "Primary Deficit",
+                "Public Debt",
+                "FRBM",
+                "Fiscal Consolidation"
+              ]
+            }
+          ]
+        },
+        {
+          "id": "external-sector",
+          "name": "External Sector",
+          "topics": [
+            {
+              "id": "balance-of-payments",
+              "name": "Balance of Payments",
+              "subtopics": [
+                "Balance of Payments",
+                "Current Account",
+                "Capital Account",
+                "Foreign Exchange Reserves",
+                "Exchange Rates",
+                "Rupee",
+                "FDI",
+                "FPI",
+                "External Debt",
+                "Trade Deficit"
+              ]
+            }
+          ]
+        },
+        {
+          "id": "inclusive-growth",
+          "name": "Inclusive Growth",
+          "topics": [
+            {
+              "id": "inclusive-development",
+              "name": "Inclusive Development",
+              "subtopics": [
+                "Poverty",
+                "Inequality",
+                "Employment",
+                "Unemployment",
+                "Financial Inclusion",
+                "Social Security",
+                "Demographics",
+                "Human Capital"
+              ]
+            }
+          ]
+        },
+        {
+          "id": "infrastructure",
+          "name": "Infrastructure",
+          "topics": [
+            {
+              "id": "economic-infrastructure",
+              "name": "Economic Infrastructure",
+              "subtopics": [
+                "Roads",
+                "Railways",
+                "Ports",
+                "Airports",
+                "Power",
+                "Telecom",
+                "Digital Infrastructure",
+                "Logistics",
+                "Urban Infrastructure"
+              ]
+            }
+          ]
+        },
+        {
+          "id": "industry",
+          "name": "Industry",
+          "topics": [
+            {
+              "id": "industrial-development",
+              "name": "Industrial Development",
+              "subtopics": [
+                "MSMEs",
+                "Manufacturing",
+                "Make in India",
+                "PLI",
+                "Startups",
+                "Industrial Corridors",
+                "Ease of Doing Business",
+                "Labour Reforms"
+              ]
+            }
+          ]
+        }
+      ]
+    },
+
+    {
+      "id": "gs3-agriculture",
+      "name": "Agriculture",
+      "paper": "GS3",
+      "chapters": [
+        {
+          "id": "agricultural-production",
+          "name": "Agricultural Production",
+          "topics": [
+            {
+              "id": "farm-production",
+              "name": "Farm Production",
+              "subtopics": [
+                "Cropping Patterns",
+                "Irrigation",
+                "Water-Use Efficiency",
+                "Agricultural Productivity",
+                "Seeds",
+                "Fertilizers",
+                "Pesticides",
+                "Soil Health"
+              ]
+            }
+          ]
+        },
+        {
+          "id": "sustainable-agriculture",
+          "name": "Sustainable Agriculture",
+          "topics": [
+            {
+              "id": "sustainable-farming",
+              "name": "Sustainable Farming",
+              "subtopics": [
+                "Organic Farming",
+                "Natural Farming",
+                "Precision Agriculture",
+                "Agricultural Biotechnology",
+                "GM Crops",
+                "Climate-Resilient Agriculture"
+              ]
+            }
+          ]
+        },
+        {
+          "id": "food-processing",
+          "name": "Food Processing and Supply Chains",
+          "topics": [
+            {
+              "id": "food-supply-chain",
+              "name": "Food Supply Chain",
+              "subtopics": [
+                "Food Processing",
+                "Cold Chains",
+                "Supply Chains",
+                "Agricultural Marketing",
+                "Storage",
+                "Warehousing"
+              ]
+            }
+          ]
+        },
+        {
+          "id": "agricultural-policy",
+          "name": "Agricultural Policy",
+          "topics": [
+            {
+              "id": "farmer-policy",
+              "name": "Farmer Policies",
+              "subtopics": [
+                "MSP",
+                "Procurement",
+                "PDS",
+                "Food Security",
+                "Buffer Stocks",
+                "Crop Insurance",
+                "Farmer Income"
+              ]
+            }
+          ]
+        },
+        {
+          "id": "allied-activities",
+          "name": "Allied Activities",
+          "topics": [
+            {
+              "id": "allied-agriculture",
+              "name": "Allied Agriculture",
+              "subtopics": [
+                "Fisheries",
+                "Aquaculture",
+                "Dairy",
+                "Livestock",
+                "Cooperatives",
+                "Agri-Tech"
+              ]
+            }
+          ]
+        }
+      ]
+    },
+
+    {
+      "id": "gs3-environment",
+      "name": "Environment and Ecology",
+      "paper": "GS3",
+      "chapters": [
+        {
+          "id": "ecology",
+          "name": "Ecology",
+          "topics": [
+            {
+              "id": "ecosystems",
+              "name": "Ecosystems",
+              "subtopics": [
+                "Ecosystem",
+                "Food Chains",
+                "Food Webs",
+                "Ecological Pyramids",
+                "Energy Flow",
+                "Nutrient Cycles",
+                "Ecological Succession",
+                "Ecological Niches"
+              ]
+            }
+          ]
+        },
+        {
+          "id": "biodiversity",
+          "name": "Biodiversity",
+          "topics": [
+            {
+              "id": "biodiversity-conservation",
+              "name": "Biodiversity Conservation",
+              "subtopics": [
+                "Genetic Diversity",
+                "Species Diversity",
+                "Ecosystem Diversity",
+                "Biodiversity Hotspots",
+                "Endemic Species",
+                "Invasive Species",
+                "Threatened Species",
+                "IUCN Categories"
+              ]
+            }
+          ]
+        },
+        {
+          "id": "protected-areas",
+          "name": "Protected Areas",
+          "topics": [
+            {
+              "id": "conservation-areas",
+              "name": "Conservation Areas",
+              "subtopics": [
+                "National Parks",
+                "Wildlife Sanctuaries",
+                "Biosphere Reserves",
+                "Tiger Reserves",
+                "Elephant Reserves",
+                "Conservation Reserves",
+                "Community Reserves",
+                "Wildlife Corridors"
+              ]
+            }
+          ]
+        },
+        {
+          "id": "climate-change",
+          "name": "Climate Change",
+          "topics": [
+            {
+              "id": "climate-policy",
+              "name": "Climate Change and Policy",
+              "subtopics": [
+                "Greenhouse Gases",
+                "Global Warming",
+                "Carbon Cycle",
+                "Climate Models",
+                "Mitigation",
+                "Adaptation",
+                "Carbon Markets",
+                "Net Zero",
+                "Climate Finance",
+                "Loss and Damage",
+                "NDCs"
+              ]
+            }
+          ]
+        },
+        {
+          "id": "pollution",
+          "name": "Pollution",
+          "topics": [
+            {
+              "id": "pollution-types",
+              "name": "Types of Pollution",
+              "subtopics": [
+                "Air Pollution",
+                "Water Pollution",
+                "Soil Pollution",
+                "Noise Pollution",
+                "Plastic Pollution",
+                "E-Waste",
+                "Biomedical Waste",
+                "Hazardous Waste",
+                "Solid Waste"
+              ]
+            }
+          ]
+        }
+      ]
+    },
+
+    {
+      "id": "gs3-science-tech",
+      "name": "Science and Technology",
+      "paper": "GS3",
+      "chapters": [
+        {
+          "id": "space",
+          "name": "Space Technology",
+          "topics": [
+            {
+              "id": "space-programmes",
+              "name": "Space Programmes",
+              "subtopics": [
+                "ISRO",
+                "Launch Vehicles",
+                "Satellites",
+                "Remote Sensing",
+                "Navigation",
+                "Communication Satellites",
+                "Earth Observation",
+                "Human Spaceflight",
+                "Chandrayaan",
+                "Gaganyaan",
+                "Solar Missions",
+                "Planetary Missions",
+                "Space Debris"
+              ]
+            }
+          ]
+        },
+        {
+          "id": "biotechnology",
+          "name": "Biotechnology",
+          "topics": [
+            {
+              "id": "modern-biotechnology",
+              "name": "Modern Biotechnology",
+              "subtopics": [
+                "DNA",
+                "RNA",
+                "Genomics",
+                "Gene Editing",
+                "CRISPR",
+                "Genetic Engineering",
+                "GM Organisms",
+                "Stem Cells",
+                "Vaccines",
+                "mRNA",
+                "Bioinformatics",
+                "Synthetic Biology",
+                "Biosecurity"
+              ]
+            }
+          ]
+        },
+        {
+          "id": "artificial-intelligence",
+          "name": "Artificial Intelligence",
+          "topics": [
+            {
+              "id": "ai-technologies",
+              "name": "AI Technologies",
+              "subtopics": [
+                "Machine Learning",
+                "Generative AI",
+                "Large Language Models",
+                "AI Governance",
+                "AI Ethics",
+                "Deepfakes",
+                "AI Safety",
+                "AI in Governance",
+                "AI in Healthcare",
+                "AI in Education"
+              ]
+            }
+          ]
+        },
+        {
+          "id": "information-technology",
+          "name": "Information Technology",
+          "topics": [
+            {
+              "id": "digital-technologies",
+              "name": "Digital Technologies",
+              "subtopics": [
+                "Internet",
+                "Cloud Computing",
+                "Internet of Things",
+                "Big Data",
+                "Blockchain",
+                "Quantum Computing",
+                "Semiconductors",
+                "5G",
+                "6G",
+                "Digital Public Infrastructure"
+              ]
+            }
+          ]
+        },
+        {
+          "id": "defence-technology",
+          "name": "Defence Technology",
+          "topics": [
+            {
+              "id": "defence-systems",
+              "name": "Defence Systems",
+              "subtopics": [
+                "Missiles",
+                "Drones",
+                "Counter-Drone Systems",
+                "Radar",
+                "Electronic Warfare",
+                "Directed Energy Weapons",
+                "Unmanned Systems",
+                "Defence Manufacturing",
+                "Space Defence"
+              ]
+            }
+          ]
+        },
+        {
+          "id": "energy-technology",
+          "name": "Energy Technology",
+          "topics": [
+            {
+              "id": "energy-technologies",
+              "name": "Energy Technologies",
+              "subtopics": [
+                "Solar Energy",
+                "Wind Energy",
+                "Nuclear Energy",
+                "Hydrogen",
+                "Batteries",
+                "Energy Storage",
+                "Fuel Cells",
+                "Biofuels",
+                "Small Modular Reactors"
+              ]
+            }
+          ]
+        }
+      ]
+    },
+
+    {
+      "id": "gs3-internal-security",
+      "name": "Internal Security",
+      "paper": "GS3",
+      "chapters": [
+        {
+          "id": "security-challenges",
+          "name": "Security Challenges",
+          "topics": [
+            {
+              "id": "internal-threats",
+              "name": "Internal Threats",
+              "subtopics": [
+                "Terrorism",
+                "Extremism",
+                "Left Wing Extremism",
+                "Insurgency",
+                "Separatism",
+                "Communal Violence",
+                "Organized Crime"
+              ]
+            }
+          ]
+        },
+        {
+          "id": "border-management",
+          "name": "Border Management",
+          "topics": [
+            {
+              "id": "indian-borders",
+              "name": "Indian Borders",
+              "subtopics": [
+                "India-Pakistan Border",
+                "India-China Border",
+                "India-Bangladesh Border",
+                "India-Myanmar Border",
+                "India-Nepal Border",
+                "India-Bhutan Border",
+                "Coastal Security",
+                "Border Infrastructure"
+              ]
+            }
+          ]
+        },
+        {
+          "id": "cyber-security",
+          "name": "Cyber Security",
+          "topics": [
+            {
+              "id": "cyber-threats",
+              "name": "Cyber Threats",
+              "subtopics": [
+                "Cybercrime",
+                "Cyber Warfare",
+                "Critical Information Infrastructure",
+                "Data Security",
+                "Digital Espionage",
+                "Cyber Terrorism",
+                "Ransomware",
+                "Malware"
+              ]
+            }
+          ]
+        }
+      ]
+    },
+
+    {
+      "id": "gs3-disaster-management",
+      "name": "Disaster Management",
+      "paper": "GS3",
+      "chapters": [
+        {
+          "id": "natural-disasters",
+          "name": "Natural Disasters",
+          "topics": [
+            {
+              "id": "natural-hazards",
+              "name": "Natural Hazards",
+              "subtopics": [
+                "Earthquakes",
+                "Tsunamis",
+                "Cyclones",
+                "Floods",
+                "Droughts",
+                "Landslides",
+                "Avalanches",
+                "Heat Waves",
+                "Cold Waves",
+                "Lightning",
+                "Cloudbursts"
+              ]
+            }
+          ]
+        },
+        {
+          "id": "disaster-management-cycle",
+          "name": "Disaster Management",
+          "topics": [
+            {
+              "id": "disaster-cycle",
+              "name": "Disaster Management Cycle",
+              "subtopics": [
+                "Preparedness",
+                "Prevention",
+                "Mitigation",
+                "Response",
+                "Recovery",
+                "Rehabilitation",
+                "Early Warning Systems",
+                "Community Participation",
+                "NDMA",
+                "NDRF",
+                "Sendai Framework",
+                "Disaster-Resilient Infrastructure"
+              ]
+            }
+          ]
+        }
+      ]
+    },
+
+    {
+      "id": "gs4-ethics",
+      "name": "Ethics, Integrity and Aptitude",
+      "paper": "GS4",
+      "chapters": [
+        {
+          "id": "ethics-human-values",
+          "name": "Ethics and Human Values",
+          "topics": [
+            {
+              "id": "ethical-foundations",
+              "name": "Ethical Foundations",
+              "subtopics": [
+                "Ethics",
+                "Morality",
+                "Values",
+                "Human Values",
+                "Attitude",
+                "Aptitude",
+                "Emotional Intelligence"
+              ]
+            }
+          ]
+        },
+        {
+          "id": "ethical-thinkers",
+          "name": "Ethical Thinkers",
+          "topics": [
+            {
+              "id": "ethical-philosophies",
+              "name": "Ethical Philosophies",
+              "subtopics": [
+                "Indian Thinkers",
+                "Western Thinkers",
+                "Gandhian Ethics",
+                "Utilitarianism",
+                "Deontology",
+                "Virtue Ethics",
+                "Justice",
+                "Rights"
+              ]
+            }
+          ]
+        },
+        {
+          "id": "civil-service-values",
+          "name": "Civil Service Values",
+          "topics": [
+            {
+              "id": "public-service-values",
+              "name": "Public Service Values",
+              "subtopics": [
+                "Integrity",
+                "Impartiality",
+                "Objectivity",
+                "Non-Partisanship",
+                "Dedication",
+                "Empathy",
+                "Compassion",
+                "Accountability"
+              ]
+            }
+          ]
+        },
+        {
+          "id": "probity",
+          "name": "Probity in Governance",
+          "topics": [
+            {
+              "id": "ethical-governance",
+              "name": "Ethical Governance",
+              "subtopics": [
+                "Transparency",
+                "Accountability",
+                "Probity",
+                "Public Service Values",
+                "Conflict of Interest",
+                "Corruption",
+                "Whistleblowing",
+                "Code of Conduct",
+                "Code of Ethics"
+              ]
+            }
+          ]
+        },
+        {
+          "id": "case-studies",
+          "name": "Case Studies",
+          "topics": [
+            {
+              "id": "ethics-case-studies",
+              "name": "Ethics Case Studies",
+              "subtopics": [
+                "Administrative Dilemmas",
+                "Conflict of Interest",
+                "Corruption",
+                "Political Pressure",
+                "Public Welfare",
+                "Corporate Ethics",
+                "Environmental Ethics",
+                "Technology Ethics",
+                "AI Ethics",
+                "Crisis Management"
+              ]
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}
