@@ -17,7 +17,7 @@ const mockCategories = [
 
 const mockQuickAccess = [
   { id: 1, title: 'Current Affairs', subtitle: 'Read & Analyze', icon: FileText, color: 'text-orange-500', bg: 'bg-orange-50 dark:bg-orange-500/10' },
-  { id: 2, title: 'Prelims Practice', subtitle: 'MCQs & Quizzes', icon: Target, color: 'text-emerald-500', bg: 'bg-emerald-50 dark:bg-emerald-500/10' },
+  { id: 2, title: 'Syllabus Tracker', subtitle: 'Track & Covered', icon: Target, color: 'text-indigo-500', bg: 'bg-indigo-50 dark:bg-indigo-500/10' },
   { id: 3, title: 'Mains Practice', subtitle: 'Answer Writing', icon: PenTool, color: 'text-purple-500', bg: 'bg-purple-50 dark:bg-purple-500/10' },
   { id: 4, title: 'Interview Prep', subtitle: 'Personality Q.', icon: Mic, color: 'text-red-500', bg: 'bg-red-50 dark:bg-red-500/10' },
   { id: 5, title: 'PYQ Bank', subtitle: 'Topic-wise PYQs', icon: Book, color: 'text-blue-500', bg: 'bg-blue-50 dark:bg-blue-500/10' },
@@ -42,6 +42,20 @@ const App = () => {
   // Weekly Revision States
   const [weeklyRevisionStats, setWeeklyRevisionStats] = useState({ completed: 0, total: 0, remaining: 0 });
   const [weeklyRevision, setWeeklyRevision] = useState(null);
+
+  // Syllabus Tracker States
+  const [backView, setBackView] = useState('list');
+  const [syllabusData, setSyllabusData] = useState(null);
+  const [loadingSyllabus, setLoadingSyllabus] = useState(false);
+  const [syllabusCompleted, setSyllabusCompleted] = useState(() => {
+    try {
+      const saved = localStorage.getItem('helios_syllabus_completed');
+      return saved ? JSON.parse(saved) : {};
+    } catch (e) {
+      console.error('Failed to load syllabus progress:', e);
+      return {};
+    }
+  });
 
   // Real Streak and Goals States
   const [readStatus, setReadStatus] = useState(() => {
@@ -150,6 +164,7 @@ const App = () => {
     setActiveDate(todayStr);
     fetchDateData(todayStr);
     fetchWeeklyRevisionStats();
+    fetchSyllabus();
   }, []);
 
   const toggleTheme = () => setIsDarkMode(!isDarkMode);
@@ -236,7 +251,31 @@ const App = () => {
     }
   };
 
-  const handleOpenTopicDetails = async (dateStr, topicNumber) => {
+  const fetchSyllabus = async () => {
+    setLoadingSyllabus(true);
+    try {
+      const res = await fetch('/api/syllabus');
+      const json = await res.json();
+      if (json.subjects) {
+        setSyllabusData(json);
+      }
+    } catch (err) {
+      console.error('Error fetching syllabus:', err);
+    } finally {
+      setLoadingSyllabus(false);
+    }
+  };
+
+  const toggleSyllabusSubtopic = (key) => {
+    setSyllabusCompleted(prev => {
+      const updated = { ...prev, [key]: !prev[key] };
+      localStorage.setItem('helios_syllabus_completed', JSON.stringify(updated));
+      return updated;
+    });
+  };
+
+  const handleOpenTopicDetails = async (dateStr, topicNumber, sourceView = 'list') => {
+    setBackView(sourceView);
     let caDoc = currentAffairs;
     if (!caDoc || caDoc.date.split('T')[0] !== dateStr) {
       try {
@@ -245,8 +284,6 @@ const App = () => {
         if (json.success && json.data) {
           caDoc = json.data;
           setCurrentAffairs(caDoc);
-        } else {
-          caDoc = null;
         }
       } catch (err) {
         console.error(err);
@@ -569,6 +606,7 @@ const App = () => {
                  <button onClick={() => { setCurrentView('list'); setIsMenuOpen(false); }} className="w-full text-left p-3 rounded-xl hover:bg-slate-50 dark:hover:bg-slate-800 text-slate-700 dark:text-slate-300 text-sm font-medium">Current Affairs</button>
                )}
                <button onClick={() => { handleStartWeeklyRevision(); setIsMenuOpen(false); }} className="w-full text-left p-3 rounded-xl hover:bg-slate-50 dark:hover:bg-slate-800 text-slate-700 dark:text-slate-300 text-sm font-medium">Weekly Revision</button>
+               <button onClick={() => { setCurrentView('syllabus-tracker'); setIsMenuOpen(false); }} className="w-full text-left p-3 rounded-xl hover:bg-slate-50 dark:hover:bg-slate-800 text-slate-700 dark:text-slate-300 text-sm font-medium font-semibold text-indigo-600 dark:text-indigo-400">Syllabus Tracker</button>
             </div>
           </div>
         </div>
@@ -858,6 +896,8 @@ const App = () => {
                        setCurrentView('list');
                      } else if (item.title === 'Revision') {
                        handleStartWeeklyRevision();
+                     } else if (item.title === 'Syllabus Tracker') {
+                       setCurrentView('syllabus-tracker');
                      }
                    }}
                    className="bg-white dark:bg-slate-900 rounded-2xl p-4 md:p-5 flex flex-col items-center justify-center text-center shadow-[0_4px_20px_rgb(0,0,0,0.03)] border border-slate-100 dark:border-slate-800 hover:-translate-y-1 transition-all group disabled:opacity-50 disabled:cursor-not-allowed"
@@ -1009,7 +1049,7 @@ const App = () => {
                 <div className="mb-8">
                   <h3 className="text-lg font-bold text-orange-500 mb-4 flex items-center gap-2">Top News</h3>
                   <div 
-                    onClick={() => { setActiveTopic(featuredTopic); setCurrentView('details'); }}
+                    onClick={() => { setActiveTopic(featuredTopic); setBackView('list'); setCurrentView('details'); }}
                     className="bg-white dark:bg-slate-900 rounded-[1.5rem] p-4 sm:p-5 flex flex-col md:flex-row gap-5 border border-slate-200/60 dark:border-slate-800 shadow-sm cursor-pointer hover:shadow-md transition-shadow group"
                   >
                     {/* Cloudinary Crop Box */}
@@ -1065,7 +1105,7 @@ const App = () => {
                     {restTopics.map((topic, i) => (
                       <div 
                         key={i} 
-                        onClick={() => { setActiveTopic(topic); setCurrentView('details'); }}
+                        onClick={() => { setActiveTopic(topic); setBackView('list'); setCurrentView('details'); }}
                         className="bg-white dark:bg-slate-900 rounded-2xl p-5 border border-slate-200/60 dark:border-slate-800 shadow-sm cursor-pointer hover:shadow-md hover:border-slate-300 dark:hover:border-slate-700 transition-all flex flex-col h-full group"
                       >
                         <div className="flex justify-between items-start mb-3">
@@ -1120,7 +1160,7 @@ const App = () => {
 
     return (
       <div className="flex-1 flex flex-col min-h-screen bg-slate-50 dark:bg-slate-950 transition-colors">
-        <Header showBack={true} onBack={() => setCurrentView('list')} />
+        <Header showBack={true} onBack={() => setCurrentView(backView)} />
         
         <main className="flex-1 max-w-4xl w-full mx-auto p-4 md:p-6 pb-24">
           <div className="bg-white dark:bg-slate-900 rounded-3xl p-6 md:p-8 border border-slate-200/60 dark:border-slate-800 shadow-sm flex flex-col gap-6">
@@ -1546,6 +1586,736 @@ const App = () => {
     );
   };
 
+  const SyllabusTrackerScreen = () => {
+    const [searchQuery, setSearchQuery] = useState('');
+    const [activeSubject, setActiveSubject] = useState(null);
+    const [expandedChapters, setExpandedChapters] = useState({});
+    const [expandedTopics, setExpandedTopics] = useState({});
+    const [expandedSubtopics, setExpandedSubtopics] = useState({});
+
+    if (loadingSyllabus || !syllabusData) {
+      return (
+        <div className="flex-1 flex flex-col min-h-screen bg-[#F8FAFC] dark:bg-[#0B1120] transition-colors">
+          <Header showBack={true} onBack={() => setCurrentView('upload')} />
+          <main className="flex-1 flex flex-col items-center justify-center p-6">
+            <RefreshCw size={40} className="text-orange-500 animate-spin mb-4" />
+            <h4 className="text-lg font-bold text-slate-900 dark:text-white mb-2">Loading Syllabus Tracker</h4>
+            <p className="text-sm text-slate-500 dark:text-slate-400">Enriching UPSC subjects with current affairs data...</p>
+          </main>
+        </div>
+      );
+    }
+
+    const toggleChapter = (chapId) => {
+      setExpandedChapters(prev => ({ ...prev, [chapId]: !prev[chapId] }));
+    };
+
+    const toggleTopic = (topicId) => {
+      setExpandedTopics(prev => ({ ...prev, [topicId]: !prev[topicId] }));
+    };
+
+    const getSubjectIcon = (subjectId) => {
+      switch (subjectId) {
+        case 'gs1-history': return Book;
+        case 'gs1-art-culture': return PenTool;
+        case 'gs1-geography': return Globe;
+        case 'gs1-society': return Landmark;
+        case 'gs2-polity': return Landmark;
+        case 'gs2-governance': return FileText;
+        case 'gs2-social-justice': return HelpCircle;
+        case 'gs2-international-relations': return Globe;
+        case 'gs3-economy': return BookOpen;
+        case 'gs3-agriculture': return Leaf;
+        case 'gs3-environment': return Leaf;
+        case 'gs3-science-tech': return Cpu;
+        case 'gs3-internal-security': return AlertCircle;
+        case 'gs3-disaster-management': return AlertCircle;
+        case 'gs4-ethics': return HelpCircle;
+        default: return Book;
+      }
+    };
+
+    const getSubjectGradient = (paper) => {
+      switch (paper) {
+        case 'GS1': return 'from-orange-500/10 to-amber-500/10 border-orange-200 dark:border-orange-950/40 text-orange-600 dark:text-orange-400 bg-orange-50 dark:bg-orange-950/10';
+        case 'GS2': return 'from-blue-500/10 to-indigo-500/10 border-blue-200 dark:border-blue-950/40 text-blue-600 dark:text-blue-400 bg-blue-50 dark:bg-blue-950/10';
+        case 'GS3': return 'from-emerald-500/10 to-teal-500/10 border-emerald-250 dark:border-emerald-950/40 text-emerald-600 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-950/10';
+        case 'GS4': return 'from-purple-500/10 to-pink-500/10 border-purple-200 dark:border-purple-950/40 text-purple-600 dark:text-purple-400 bg-purple-50 dark:bg-purple-950/10';
+        default: return 'from-slate-500/10 to-slate-600/10 border-slate-200 dark:border-slate-800 text-slate-600 dark:text-slate-400 bg-slate-50 dark:bg-slate-800/10';
+      }
+    };
+
+    // Calculate progress stats
+    const getSyllabusStats = () => {
+      let totalSubtopics = 0;
+      let completedSubtopics = 0;
+      const paperStats = {
+        'GS1': { total: 0, completed: 0, label: 'GS-I: History & Society' },
+        'GS2': { total: 0, completed: 0, label: 'GS-II: Polity & Governance' },
+        'GS3': { total: 0, completed: 0, label: 'GS-III: Economy & Tech' },
+        'GS4': { total: 0, completed: 0, label: 'GS-IV: Ethics & Integrity' }
+      };
+      const subjectStats = {};
+      let totalNewsMappedCount = 0;
+
+      syllabusData.subjects.forEach(sub => {
+        let subTotal = 0;
+        let subCompleted = 0;
+        let subNewsCount = 0;
+        const paper = sub.paper; // 'GS1', etc.
+        sub.chapters.forEach(chap => {
+          chap.topics.forEach(topic => {
+            subNewsCount += (topic.relatedNews || []).length;
+            (topic.subtopics || []).forEach(subt => {
+              const key = `${sub.id}_${chap.id}_${topic.id}_${subt}`;
+              const isDone = !!syllabusCompleted[key];
+              totalSubtopics++;
+              subTotal++;
+              if (paperStats[paper]) paperStats[paper].total++;
+              if (isDone) {
+                completedSubtopics++;
+                subCompleted++;
+                if (paperStats[paper]) paperStats[paper].completed++;
+              }
+            });
+          });
+        });
+        totalNewsMappedCount += subNewsCount;
+        subjectStats[sub.id] = {
+          total: subTotal,
+          completed: subCompleted,
+          newsCount: subNewsCount,
+          percent: subTotal > 0 ? Math.round((subCompleted / subTotal) * 100) : 0
+        };
+      });
+
+      return {
+        total: totalSubtopics,
+        completed: completedSubtopics,
+        overallPercent: totalSubtopics > 0 ? Math.round((completedSubtopics / totalSubtopics) * 100) : 0,
+        paperStats,
+        subjectStats,
+        totalNewsMappedCount
+      };
+    };
+
+    const stats = getSyllabusStats();
+
+    // Perform global search if searchQuery is active
+    const getSearchResults = () => {
+      if (!searchQuery) return [];
+      const results = [];
+      syllabusData.subjects.forEach(sub => {
+        sub.chapters.forEach(chap => {
+          chap.topics.forEach(topic => {
+            const matchesTopic = topic.name.toLowerCase().includes(searchQuery.toLowerCase());
+            const matchingSubtopics = (topic.subtopics || []).filter(subt => 
+              subt.toLowerCase().includes(searchQuery.toLowerCase())
+            );
+
+            if (matchesTopic || matchingSubtopics.length > 0) {
+              results.push({
+                subject: sub,
+                chapter: chap,
+                topic,
+                matchingSubtopics,
+                matchesTopic
+              });
+            }
+          });
+        });
+      });
+      return results;
+    };
+
+    const searchResults = getSearchResults();
+
+    return (
+      <div className="flex-1 flex flex-col min-h-screen bg-[#F8FAFC] dark:bg-[#0B1120] transition-colors">
+        <Header 
+          showBack={true} 
+          onBack={() => {
+            if (activeSubject) {
+              setActiveSubject(null);
+            } else {
+              setCurrentView('upload');
+            }
+          }} 
+        />
+
+        <main className="flex-1 max-w-6xl w-full mx-auto p-4 md:p-6 pb-24">
+          
+          {/* Active Subject Explorer View */}
+          {activeSubject ? (
+            <div className="animate-fade-in">
+              {/* Explorer Header */}
+              <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 mb-8">
+                <div>
+                  <button 
+                    onClick={() => setActiveSubject(null)}
+                    className="mb-3 text-xs font-bold text-slate-500 hover:text-orange-500 dark:hover:text-orange-400 flex items-center gap-1 transition-colors"
+                  >
+                    <ChevronLeft size={16} /> Back to Subjects
+                  </button>
+                  <div className="flex items-center gap-3">
+                    <div className={`p-2.5 rounded-2xl ${getSubjectGradient(activeSubject.paper)}`}>
+                      {React.createElement(getSubjectIcon(activeSubject.id), { size: 24 })}
+                    </div>
+                    <div>
+                      <h2 className="text-2xl md:text-3xl font-extrabold text-slate-900 dark:text-white tracking-tight">{activeSubject.name}</h2>
+                      <span className="text-xs uppercase font-extrabold tracking-widest text-orange-500">{activeSubject.paper} Syllabus</span>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Progress Ring / Mini Stats */}
+                <div className="flex items-center gap-5 bg-white dark:bg-slate-900 p-4 rounded-2xl border border-slate-150 dark:border-slate-800 shadow-sm shrink-0">
+                  <div className="flex flex-col">
+                    <span className="text-[10px] uppercase font-bold text-slate-400">Coverage</span>
+                    <span className="text-lg font-extrabold text-slate-900 dark:text-white">
+                      {stats.subjectStats[activeSubject.id]?.completed} / {stats.subjectStats[activeSubject.id]?.total}
+                    </span>
+                    <span className="text-[10px] text-slate-400 mt-0.5">Subtopics Covered</span>
+                  </div>
+                  <div className="w-12 h-12 relative flex items-center justify-center">
+                    <svg className="w-full h-full transform -rotate-90">
+                      <circle cx="24" cy="24" r="20" className="stroke-slate-100 dark:stroke-slate-800" strokeWidth="4" fill="transparent" />
+                      <circle 
+                        cx="24" 
+                        cy="24" 
+                        r="20" 
+                        className="stroke-orange-500 transition-all duration-500" 
+                        strokeWidth="4" 
+                        fill="transparent" 
+                        strokeDasharray={2 * Math.PI * 20}
+                        strokeDashoffset={2 * Math.PI * 20 - (stats.subjectStats[activeSubject.id]?.percent / 100) * (2 * Math.PI * 20)}
+                      />
+                    </svg>
+                    <span className="absolute text-[10px] font-black text-slate-700 dark:text-slate-350">{stats.subjectStats[activeSubject.id]?.percent}%</span>
+                  </div>
+                </div>
+              </div>
+
+              {/* Subject Inner Search */}
+              <div className="relative mb-6">
+                <Search size={18} className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 dark:text-slate-500" />
+                <input 
+                  type="text"
+                  placeholder={`Search in ${activeSubject.name}...`}
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  className="w-full pl-12 pr-4 py-3 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl text-sm font-medium focus:outline-none focus:border-orange-500 transition-all text-slate-900 dark:text-white shadow-sm"
+                />
+                {searchQuery && (
+                  <button onClick={() => setSearchQuery('')} className="absolute right-4 top-1/2 -translate-y-1/2 text-xs font-bold text-slate-400 hover:text-slate-600">Clear</button>
+                )}
+              </div>
+
+              {/* Chapters Accordion */}
+              <div className="flex flex-col gap-4">
+                {activeSubject.chapters.map((chapter) => {
+                  // Filter topics if search query is active
+                  const filteredTopics = chapter.topics.filter(topic => {
+                    if (!searchQuery) return true;
+                    const matchesTopic = topic.name.toLowerCase().includes(searchQuery.toLowerCase());
+                    const matchesSub = (topic.subtopics || []).some(sub => sub.toLowerCase().includes(searchQuery.toLowerCase()));
+                    return matchesTopic || matchesSub;
+                  });
+
+                  if (filteredTopics.length === 0) return null;
+
+                  const isExpanded = !!expandedChapters[chapter.id] || !!searchQuery;
+
+                  return (
+                    <div 
+                      key={chapter.id} 
+                      className="border border-slate-200/60 dark:border-slate-800 rounded-[1.5rem] bg-white dark:bg-slate-900 overflow-hidden shadow-sm transition-all"
+                    >
+                      <button 
+                        onClick={() => toggleChapter(chapter.id)}
+                        className="w-full flex items-center justify-between p-5 bg-slate-50/50 dark:bg-slate-900/50 hover:bg-slate-50 dark:hover:bg-slate-850/50 transition-colors"
+                      >
+                        <div className="flex items-center gap-3">
+                          <BookOpen size={18} className="text-slate-400" />
+                          <h4 className="font-bold text-slate-900 dark:text-white text-base md:text-lg text-left">{chapter.name}</h4>
+                        </div>
+                        <ChevronLeft 
+                          size={20} 
+                          className={`text-slate-400 transition-transform ${isExpanded ? 'rotate-90' : '-rotate-90'}`} 
+                        />
+                      </button>
+
+                      {isExpanded && (
+                        <div className="p-4 border-t border-slate-100 dark:border-slate-850 flex flex-col gap-4 bg-white dark:bg-slate-900/50">
+                          {filteredTopics.map((topic) => {
+                            const isTopicExpanded = !!expandedTopics[topic.id] || !!searchQuery;
+                            const relatedNews = topic.relatedNews || [];
+
+                            // Calculate topic completion stats
+                            const totalSubs = (topic.subtopics || []).length;
+                            const doneSubs = (topic.subtopics || []).filter(subt => 
+                              !!syllabusCompleted[`${activeSubject.id}_${chapter.id}_${topic.id}_${subt}`]
+                            ).length;
+                            const topicPercent = totalSubs > 0 ? Math.round((doneSubs / totalSubs) * 100) : 0;
+
+                            return (
+                              <div 
+                                key={topic.id}
+                                className="border border-slate-100 dark:border-slate-800 rounded-2xl overflow-hidden shadow-sm"
+                              >
+                                <button 
+                                  onClick={() => toggleTopic(topic.id)}
+                                  className="w-full flex items-center justify-between p-4 bg-slate-50/20 dark:bg-slate-950/20 hover:bg-slate-50/40 dark:hover:bg-slate-850/30 transition-colors text-left"
+                                >
+                                  <div className="flex-1 flex flex-col sm:flex-row sm:items-center justify-between gap-3 mr-4">
+                                    <div>
+                                      <h5 className="font-bold text-slate-900 dark:text-white text-sm md:text-base leading-snug">{topic.name}</h5>
+                                      <div className="flex items-center gap-2 mt-1.5 flex-wrap">
+                                        <span className="text-[10px] font-semibold text-slate-400 bg-slate-100 dark:bg-slate-800 px-2 py-0.5 rounded">
+                                          {doneSubs}/{totalSubs} subtopics
+                                        </span>
+                                        {relatedNews.length > 0 && (
+                                          <span className="text-[10px] font-bold text-emerald-600 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-950/30 px-2 py-0.5 rounded flex items-center gap-1 border border-emerald-100/50 dark:border-emerald-900/30">
+                                            {relatedNews.length} related updates
+                                          </span>
+                                        )}
+                                      </div>
+                                    </div>
+                                    <div className="w-full sm:w-28 flex items-center gap-2">
+                                      <div className="flex-1 h-2 bg-slate-150 dark:bg-slate-800 rounded-full overflow-hidden">
+                                        <div 
+                                          className={`h-full bg-gradient-to-r ${topicPercent === 100 ? 'from-emerald-500 to-teal-400' : 'from-orange-500 to-amber-400'} transition-all`} 
+                                          style={{ width: `${topicPercent}%` }}
+                                        />
+                                      </div>
+                                      <span className="text-[10px] font-black text-slate-500 dark:text-slate-400">{topicPercent}%</span>
+                                    </div>
+                                  </div>
+                                  <ChevronLeft 
+                                    size={16} 
+                                    className={`text-slate-400 transition-transform ${isTopicExpanded ? 'rotate-90' : '-rotate-90'}`} 
+                                  />
+                                </button>
+
+                                {isTopicExpanded && (
+                                  <div className="p-4 border-t border-slate-100 dark:border-slate-850 bg-slate-50/10 dark:bg-slate-950/10 flex flex-col gap-5">
+                                    
+                                    {/* Subtopics Checklist */}
+                                    <div>
+                                      <h6 className="text-[10px] uppercase font-bold text-slate-400 tracking-wider mb-2.5">Subtopics Checklist</h6>
+                                      <div className="flex flex-col gap-2.5">
+                                        {(topic.subtopics || []).map((subt, idx) => {
+                                          const key = `${activeSubject.id}_${chapter.id}_${topic.id}_${subt}`;
+                                          const isCompleted = !!syllabusCompleted[key];
+                                          const subtopicNews = relatedNews.filter(n => n.subtopic === subt);
+                                          const isExpandedSub = !!expandedSubtopics[key];
+
+                                          return (
+                                            <div key={idx} className="flex flex-col gap-2">
+                                              <div 
+                                                onClick={() => {
+                                                  if (subtopicNews.length > 0) {
+                                                    setExpandedSubtopics(prev => ({ ...prev, [key]: !prev[key] }));
+                                                  } else {
+                                                    toggleSyllabusSubtopic(key);
+                                                  }
+                                                }}
+                                                className={`flex items-center gap-3 p-3 rounded-xl border transition-all cursor-pointer select-none group ${
+                                                  isCompleted 
+                                                    ? 'border-emerald-500/20 bg-emerald-50/5 dark:bg-emerald-950/5' 
+                                                    : 'border-slate-150 dark:border-slate-800 bg-white dark:bg-slate-900/50 hover:bg-slate-50 dark:hover:bg-slate-850 hover:border-orange-500/30'
+                                                }`}
+                                              >
+                                                <div 
+                                                  onClick={(e) => { e.stopPropagation(); toggleSyllabusSubtopic(key); }}
+                                                  className={`w-5 h-5 rounded flex items-center justify-center border shrink-0 transition-colors ${
+                                                    isCompleted 
+                                                      ? 'bg-emerald-500 border-emerald-500 text-white' 
+                                                      : 'border-slate-350 dark:border-slate-700 bg-white dark:bg-slate-950 group-hover:border-orange-500'
+                                                  }`}
+                                                >
+                                                  {isCompleted && <CheckCircle2 size={14} className="fill-current text-white stroke-none" />}
+                                                </div>
+                                                
+                                                <span className={`text-xs font-bold leading-tight ${
+                                                  isCompleted 
+                                                    ? 'text-emerald-700 dark:text-emerald-400 line-through opacity-80' 
+                                                    : 'text-slate-700 dark:text-slate-300 group-hover:text-orange-500 transition-colors'
+                                                }`}>
+                                                  {subt}
+                                                </span>
+
+                                                {subtopicNews.length > 0 && (
+                                                  <span className="text-[10px] font-bold text-orange-600 dark:text-orange-400 bg-orange-50 dark:bg-orange-950/30 px-2.5 py-0.5 rounded-full flex items-center gap-1 border border-orange-100/50 dark:border-orange-900/30 transition-colors ml-auto hover:bg-orange-100 dark:hover:bg-orange-900/40">
+                                                    {subtopicNews.length} {subtopicNews.length === 1 ? 'card' : 'cards'}
+                                                  </span>
+                                                )}
+                                              </div>
+
+                                              {/* Nested subtopic news cards */}
+                                              {isExpandedSub && subtopicNews.length > 0 && (
+                                                <div className="flex flex-col gap-2.5 mt-1 pl-8 pr-1 w-full animate-fade-in">
+                                                  {subtopicNews.map((newsItem, i) => {
+                                                    const isRead = (readStatus[newsItem.date] || []).includes(newsItem.topicNumber);
+                                                    return (
+                                                      <div 
+                                                        key={i}
+                                                        onClick={(e) => { 
+                                                          e.stopPropagation(); 
+                                                          handleOpenTopicDetails(newsItem.date, newsItem.topicNumber, 'syllabus-tracker'); 
+                                                        }}
+                                                        className="bg-white dark:bg-slate-900/60 p-4 rounded-xl border border-slate-200 dark:border-slate-800 flex items-center justify-between gap-4 cursor-pointer hover:border-orange-500/50 dark:hover:border-orange-500/30 hover:shadow-sm transition-all group/news"
+                                                      >
+                                                        <div className="flex-1 min-w-0">
+                                                          <div className="flex items-center gap-2 mb-1.5">
+                                                            <span className="text-[9px] font-bold bg-slate-100 dark:bg-slate-800 text-slate-500 px-1.5 py-0.5 rounded">
+                                                              {newsItem.date}
+                                                            </span>
+                                                            <span className={`text-[9px] font-bold px-1.5 py-0.5 rounded ${
+                                                              newsItem.importance === 'HIGH' 
+                                                                ? 'bg-red-50 text-red-650 dark:bg-red-950/20 dark:text-red-400' 
+                                                                : 'bg-amber-50 text-amber-655 dark:bg-amber-955/20 dark:text-amber-400'
+                                                            }`}>
+                                                              {newsItem.importance} Relevance
+                                                            </span>
+                                                            {isRead && (
+                                                              <span className="text-[9px] font-bold text-emerald-600 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-950/20 px-1.5 py-0.5 rounded flex items-center gap-0.5">
+                                                                <CheckCircle2 size={10} className="fill-emerald-500/20" /> Read
+                                                              </span>
+                                                            )}
+                                                          </div>
+                                                          <h7 className="text-sm font-bold text-slate-855 dark:text-slate-100 leading-tight group-hover/news:text-orange-500 transition-colors block truncate">
+                                                            {newsItem.title}
+                                                          </h7>
+                                                          <p className="text-xs text-slate-500 dark:text-slate-400 line-clamp-1 mt-1 font-medium">
+                                                            {newsItem.shortDescription}
+                                                          </p>
+                                                        </div>
+                                                        <div className="w-8 h-8 rounded-full bg-slate-100 dark:bg-slate-800 flex items-center justify-center text-slate-400 group-hover/news:bg-orange-500 group-hover/news:text-white transition-colors shrink-0">
+                                                          <ArrowUpRight size={14} />
+                                                        </div>
+                                                      </div>
+                                                    );
+                                                  })}
+                                                </div>
+                                              )}
+                                            </div>
+                                          );
+                                        })}
+                                      </div>
+                                    </div>
+
+                                    {/* Related News Coverage */}
+                                    {relatedNews.length > 0 && (
+                                      <div className="pt-4 border-t border-slate-100 dark:border-slate-850">
+                                        <h6 className="text-[10px] uppercase font-bold text-slate-400 tracking-wider mb-3">Related Current Affairs Updates</h6>
+                                        <div className="flex flex-col gap-3">
+                                          {relatedNews.map((newsItem, i) => {
+                                            const isRead = (readStatus[newsItem.date] || []).includes(newsItem.topicNumber);
+                                            return (
+                                              <div 
+                                                key={i}
+                                                onClick={() => handleOpenTopicDetails(newsItem.date, newsItem.topicNumber, 'syllabus-tracker')}
+                                                className="bg-white dark:bg-slate-900 p-4 rounded-xl border border-slate-150 dark:border-slate-800 flex items-center justify-between gap-4 cursor-pointer hover:border-slate-300 dark:hover:border-slate-750 hover:shadow-sm transition-all group"
+                                              >
+                                                <div className="flex-1 min-w-0">
+                                                  <div className="flex items-center gap-2 mb-1.5">
+                                                    <span className="text-[9px] font-bold bg-slate-100 dark:bg-slate-800 text-slate-500 px-2 py-0.5 rounded">
+                                                      {newsItem.date}
+                                                    </span>
+                                                    <span className={`text-[9px] font-bold px-2 py-0.5 rounded ${
+                                                      newsItem.importance === 'HIGH' 
+                                                        ? 'bg-red-50 text-red-650 dark:bg-red-950/20 dark:text-red-400' 
+                                                        : 'bg-amber-50 text-amber-650 dark:bg-amber-950/20 dark:text-amber-400'
+                                                    }`}>
+                                                      {newsItem.importance} Relevance
+                                                    </span>
+                                                    {isRead && (
+                                                      <span className="text-[9px] font-bold text-emerald-600 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-950/20 px-2 py-0.5 rounded flex items-center gap-0.5">
+                                                        <CheckCircle2 size={10} className="fill-emerald-500/20" /> Read
+                                                      </span>
+                                                    )}
+                                                  </div>
+                                                  <h5 className="text-sm font-bold text-slate-855 dark:text-slate-100 leading-tight group-hover:text-orange-500 transition-colors block truncate">
+                                                    {newsItem.title}
+                                                  </h5>
+                                                  <p className="text-xs text-slate-500 dark:text-slate-400 line-clamp-1 mt-1 font-medium">
+                                                    {newsItem.shortDescription}
+                                                  </p>
+                                                </div>
+                                                <div className="w-8 h-8 rounded-full bg-slate-50 dark:bg-slate-853 flex items-center justify-center text-slate-400 group-hover:bg-orange-500 group-hover:text-white transition-colors shrink-0">
+                                                  <ArrowUpRight size={14} />
+                                                </div>
+                                              </div>
+                                            );
+                                          })}
+                                        </div>
+                                      </div>
+                                    )}
+                                    
+                                  </div>
+                                )}
+                              </div>
+                            );
+                          })}
+                        </div>
+                      )}
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+          ) : (
+            // Main Syllabus Dashboard View
+            <div className="animate-fade-in">
+              <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 mb-8">
+                <div>
+                  <h2 className="text-3xl font-extrabold text-slate-900 dark:text-white tracking-tight">Syllabus Tracker</h2>
+                  <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">Map, measure, and master the complete UPSC syllabus with your daily news intake.</p>
+                </div>
+              </div>
+
+              {/* Progress Summary Cards */}
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+                {/* Overall coverage circle */}
+                <div className="bg-gradient-to-br from-[#1A1F2E] to-[#111827] text-white rounded-[2rem] p-6 shadow-xl border border-transparent dark:border-slate-800 flex items-center justify-between hover:-translate-y-1 transition-all">
+                  <div className="flex flex-col gap-1">
+                    <span className="text-[10px] uppercase font-bold tracking-wider text-slate-405">Overall coverage</span>
+                    <span className="text-4xl font-extrabold text-white">{stats.completed}</span>
+                    <span className="text-xs font-semibold text-slate-400">/ {stats.total} total subtopics</span>
+                    <span className="text-[11px] font-bold text-orange-400 mt-2 flex items-center gap-1">
+                      <Flame size={12} className="fill-orange-400" /> {stats.totalNewsMappedCount} mapped news cards
+                    </span>
+                  </div>
+                  <div className="w-24 h-24 relative flex items-center justify-center">
+                    <svg className="w-full h-full transform -rotate-90">
+                      <circle cx="48" cy="48" r="40" className="stroke-slate-800" strokeWidth="8" fill="transparent" />
+                      <circle 
+                        cx="48" 
+                        cy="48" 
+                        r="40" 
+                        className="stroke-orange-500 transition-all duration-500" 
+                        strokeWidth="8" 
+                        fill="transparent" 
+                        strokeDasharray={2 * Math.PI * 40}
+                        strokeDashoffset={2 * Math.PI * 40 - (stats.overallPercent / 100) * (2 * Math.PI * 40)}
+                      />
+                    </svg>
+                    <span className="absolute text-base font-black text-white">{stats.overallPercent}%</span>
+                  </div>
+                </div>
+
+                {/* Paper breakdowns (GS1 & GS2) */}
+                <div className="bg-white dark:bg-slate-900 rounded-[2rem] p-6 shadow-[0_8px_30px_rgb(0,0,0,0.04)] border border-slate-100 dark:border-slate-800/80 flex flex-col justify-between hover:-translate-y-1 transition-all">
+                  {['GS1', 'GS2'].map(paperKey => {
+                    const paper = stats.paperStats[paperKey];
+                    const percent = paper.total > 0 ? Math.round((paper.completed / paper.total) * 100) : 0;
+                    return (
+                      <div key={paperKey} className="flex flex-col gap-2 first:mb-4">
+                                                        <div className="flex justify-between text-xs font-bold">
+                                                          <span className="text-slate-700 dark:text-slate-300">{paper.label}</span>
+                                                          <span className="text-orange-500">{percent}%</span>
+                                                        </div>
+                                                        <div className="w-full h-2 bg-slate-100 dark:bg-slate-800 rounded-full overflow-hidden">
+                                                          <div 
+                                                            className="h-full bg-gradient-to-r from-orange-500 to-amber-400 transition-all" 
+                                                            style={{ width: `${percent}%` }}
+                                                          />
+                                                        </div>
+                                                        <span className="text-[10px] text-slate-400 font-semibold">{paper.completed} / {paper.total} subtopics</span>
+                                                      </div>
+                                                    )
+                                                  })}
+                                                </div>
+
+                                                {/* Paper breakdowns (GS3 & GS4) */}
+                                                <div className="bg-white dark:bg-slate-900 rounded-[2rem] p-6 shadow-[0_8px_30px_rgb(0,0,0,0.04)] border border-slate-100 dark:border-slate-800/80 flex flex-col justify-between hover:-translate-y-1 transition-all">
+                                                  {['GS3', 'GS4'].map(paperKey => {
+                                                    const paper = stats.paperStats[paperKey];
+                                                    const percent = paper.total > 0 ? Math.round((paper.completed / paper.total) * 100) : 0;
+                                                    return (
+                                                      <div key={paperKey} className="flex flex-col gap-2 first:mb-4">
+                                                        <div className="flex justify-between text-xs font-bold">
+                                                          <span className="text-slate-700 dark:text-slate-350">{paper.label}</span>
+                                                          <span className="text-orange-555 text-orange-500">{percent}%</span>
+                                                        </div>
+                                                        <div className="w-full h-2 bg-slate-100 dark:bg-slate-800 rounded-full overflow-hidden">
+                                                          <div 
+                                                            className="h-full bg-gradient-to-r from-orange-500 to-amber-400 transition-all" 
+                                                            style={{ width: `${percent}%` }}
+                                                          />
+                                                        </div>
+                                                        <span className="text-[10px] text-slate-400 font-semibold">{paper.completed} / {paper.total} subtopics</span>
+                                                      </div>
+                                                    )
+                                                  })}
+                                                </div>
+                                              </div>
+
+                                              {/* Main search bar */}
+                                              <div className="relative mb-8">
+                                                <Search size={20} className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 dark:text-slate-500" />
+                                                <input 
+                                                  type="text"
+                                                  placeholder="Search any UPSC topic, theme, or subtopic (e.g. Fundamental Rights, FDI, Indus Valley)..."
+                                                  value={searchQuery}
+                                                  onChange={(e) => setSearchQuery(e.target.value)}
+                                                  className="w-full pl-12 pr-4 py-4 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl text-sm font-medium focus:outline-none focus:border-orange-500 focus:ring-1 focus:ring-orange-500 transition-all text-slate-900 dark:text-white shadow-sm"
+                                                />
+                {searchQuery && (
+                  <button onClick={() => setSearchQuery('')} className="absolute right-4 top-1/2 -translate-y-1/2 text-xs font-bold text-slate-400 hover:text-slate-650">Clear</button>
+                )}
+              </div>
+
+              {/* Search Results / Subjects List */}
+              {searchQuery ? (
+                <div>
+                  <h3 className="text-lg font-bold text-slate-900 dark:text-white mb-4">Search Results ({searchResults.length})</h3>
+                  {searchResults.length === 0 ? (
+                    <div className="text-center py-16 bg-white dark:bg-slate-900 rounded-3xl border border-slate-150 dark:border-slate-800 shadow-sm">
+                      <HelpCircle size={48} className="mx-auto mb-4 text-slate-350 dark:text-slate-700" />
+                      <h4 className="text-base font-bold text-slate-900 dark:text-white mb-2">No Matching Syllabus Topics</h4>
+                      <p className="text-sm text-slate-500 dark:text-slate-400 max-w-sm mx-auto">Try typing another keyword, or search within subjects.</p>
+                    </div>
+                  ) : (
+                    <div className="flex flex-col gap-4">
+                      {searchResults.map((res, i) => {
+                        const subKey = res.subject.id;
+                        const chapKey = res.chapter.id;
+                        const topicKey = res.topic.id;
+                        const relatedNews = res.topic.relatedNews || [];
+
+                        const totalSubs = (res.topic.subtopics || []).length;
+                        const doneSubs = (res.topic.subtopics || []).filter(subt => 
+                          !!syllabusCompleted[`${subKey}_${chapKey}_${topicKey}_${subt}`]
+                        ).length;
+
+                        return (
+                          <div 
+                            key={i}
+                            className="bg-white dark:bg-slate-900 p-5 rounded-2xl border border-slate-150 dark:border-slate-800 shadow-sm flex flex-col md:flex-row justify-between md:items-center gap-4 hover:border-slate-300 dark:hover:border-slate-750 transition-colors"
+                          >
+                            <div className="flex-1">
+                              <div className="flex items-center gap-2 flex-wrap mb-2">
+                                <span className="text-[9px] uppercase font-extrabold px-2 py-0.5 rounded bg-orange-50 text-orange-600 dark:bg-orange-950/20 dark:text-orange-400">
+                                  {res.subject.paper} &bull; {res.subject.name}
+                                </span>
+                                <span className="text-[9px] font-bold text-slate-400">
+                                  {res.chapter.name}
+                                </span>
+                              </div>
+                              <h4 className="text-base font-extrabold text-slate-900 dark:text-white leading-tight">
+                                {res.topic.name}
+                              </h4>
+                              {res.matchingSubtopics.length > 0 && (
+                                <p className="text-xs text-slate-500 dark:text-slate-400 mt-1 font-semibold">
+                                  Matches: <span className="text-orange-600 dark:text-orange-400">{res.matchingSubtopics.join(', ')}</span>
+                                </p>
+                              )}
+                              <div className="flex items-center gap-3 mt-3 flex-wrap">
+                                <span className="text-[10px] font-bold bg-slate-50 dark:bg-slate-850 text-slate-500 px-2 py-0.5 rounded border border-slate-100 dark:border-slate-800">
+                                  {doneSubs}/{totalSubs} subtopics cover
+                                </span>
+                                {relatedNews.length > 0 && (
+                                  <span className="text-[10px] font-bold bg-orange-50 text-orange-600 dark:bg-orange-950/20 dark:text-orange-400 px-2 py-0.5 rounded flex items-center gap-1 border border-orange-100/50 dark:border-orange-900/30">
+                                    {relatedNews.length} related updates
+                                  </span>
+                                )}
+                              </div>
+                            </div>
+                            
+                            <button 
+                              onClick={() => {
+                                setActiveSubject(res.subject);
+                                toggleChapter(res.chapter.id);
+                                toggleTopic(res.topic.id);
+                              }}
+                              className="px-4 py-2 bg-orange-50 hover:bg-orange-100 dark:bg-orange-950/20 dark:hover:bg-orange-900/30 border border-orange-100 dark:border-orange-900/50 rounded-xl text-xs font-bold text-orange-600 dark:text-orange-400 transition-colors flex items-center gap-1.5"
+                            >
+                              Go to Topic <ArrowRight size={14} />
+                            </button>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  )}
+                </div>
+              ) : (
+                <div>
+                  <h3 className="text-lg font-bold text-slate-900 dark:text-white mb-5">UPSC GS Papers & Subjects</h3>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+                    {syllabusData.subjects.map((sub) => {
+                      const subjectStats = stats.subjectStats[sub.id] || { total: 0, completed: 0, percent: 0, newsCount: 0 };
+                      const Icon = getSubjectIcon(sub.id);
+                      return (
+                        <div 
+                          key={sub.id}
+                          onClick={() => {
+                            setActiveSubject(sub);
+                            setSearchQuery('');
+                          }}
+                          className="bg-white dark:bg-slate-900 rounded-[2rem] p-6 border border-slate-200/50 dark:border-slate-800/80 shadow-sm hover:shadow-md cursor-pointer hover:-translate-y-1 transition-all flex flex-col justify-between group"
+                        >
+                          <div>
+                            {/* Card Top */}
+                            <div className="flex justify-between items-start mb-4">
+                              <span className="text-[10px] uppercase font-black px-2.5 py-1 rounded-md border bg-orange-50 text-orange-600 dark:bg-orange-950/20 dark:text-orange-400 border-orange-100/50 dark:border-orange-900/20">
+                                {sub.paper}
+                              </span>
+
+                              {subjectStats.newsCount > 0 && (
+                                <span className="text-[10px] font-bold bg-orange-50 text-orange-600 dark:bg-orange-950/20 dark:text-orange-400 px-2 py-0.5 rounded border border-orange-100/50 dark:border-orange-900/20">
+                                  {subjectStats.newsCount} articles
+                                </span>
+                              )}
+                            </div>
+
+                            {/* Subject Title */}
+                            <div className="flex items-center gap-3.5 mb-6">
+                              <div className={`p-3 rounded-2xl ${getSubjectGradient(sub.paper)} group-hover:scale-110 transition-transform`}>
+                                <Icon size={22} />
+                              </div>
+                              <h4 className="text-lg font-extrabold text-slate-850 dark:text-white leading-tight group-hover:text-orange-500 transition-colors">
+                                {sub.name}
+                              </h4>
+                            </div>
+                          </div>
+
+                          {/* Card Progress Footer */}
+                          <div className="pt-4 border-t border-slate-100 dark:border-slate-800/60 mt-auto">
+                            <div className="flex justify-between items-baseline mb-2">
+                              <span className="text-xs font-bold text-slate-500 dark:text-slate-400">
+                                {subjectStats.completed} / {subjectStats.total} covered
+                              </span>
+                              <span className="text-xs font-black text-slate-900 dark:text-white">
+                                {subjectStats.percent}%
+                              </span>
+                            </div>
+                            <div className="w-full h-2 bg-slate-100 dark:bg-slate-850 rounded-full overflow-hidden">
+                              <div 
+                                className={`h-full bg-gradient-to-r ${
+                                  sub.paper === 'GS1' ? 'from-orange-500 to-amber-400' :
+                                  sub.paper === 'GS2' ? 'from-blue-500 to-indigo-500' :
+                                  sub.paper === 'GS3' ? 'from-emerald-500 to-teal-400' :
+                                  'from-purple-500 to-pink-500'
+                                } transition-all`} 
+                                style={{ width: `${subjectStats.percent}%` }}
+                              />
+                            </div>
+                          </div>
+                        </div>
+                      )
+                    })}
+                  </div>
+                </div>
+              )}
+            </div>
+          )}
+        </main>
+      </div>
+    );
+  };
+
   return (
     <div className="min-h-screen flex flex-col font-sans bg-[#FFFDF9] dark:bg-[#0B1120] text-slate-900 dark:text-slate-100 selection:bg-orange-200 selection:text-orange-900 dark:selection:bg-orange-900 dark:selection:text-orange-100 transition-colors duration-200">
       {currentView === 'upload' && <UploadScreen />}
@@ -1553,6 +2323,7 @@ const App = () => {
       {currentView === 'list' && <ListScreen />}
       {currentView === 'details' && <DetailsScreen />}
       {currentView === 'weekly-revision' && <WeeklyRevisionScreen />}
+      {currentView === 'syllabus-tracker' && <SyllabusTrackerScreen />}
       
       <MenuModal />
     </div>
