@@ -102,7 +102,7 @@ class WeeklyRevisionService {
   /**
    * Fetch or generate weekly revision for the current/latest cycle.
    */
-  async getLatestWeeklyRevision(referenceDate = new Date()) {
+  async getLatestWeeklyRevision(referenceDate = new Date(), delayMs = 10000) {
     const { startDate, endDate } = this.getCycleRange(referenceDate);
     
     // Check if revision document already exists
@@ -113,13 +113,13 @@ class WeeklyRevisionService {
 
     // Auto-generate if it doesn't exist
     console.log(`[WeeklyRevision] Auto-generating revision for cycle: ${startDate.toISOString()} to ${endDate.toISOString()}`);
-    return await this.generateWeeklyRevision(startDate, endDate);
+    return await this.generateWeeklyRevision(startDate, endDate, delayMs);
   }
 
   /**
    * Generate weekly revision materials using Gemini for a given date range.
    */
-  async generateWeeklyRevision(startDate, endDate) {
+  async generateWeeklyRevision(startDate, endDate, delayMs = 10000) {
     // 1. Fetch current affairs records uploaded within this cycle
     const currentAffairsDocs = await CurrentAffairs.find({
       createdAt: { $gte: startDate, $lt: endDate },
@@ -164,71 +164,145 @@ class WeeklyRevisionService {
       return null;
     }
 
-    console.log(`[WeeklyRevision] Sending ${topicsToSummarize.length} topics to Gemini for revision synthesis...`);
+    // 3. Group topics by subject
+    const subjectsMap = {};
+    topicsToSummarize.forEach(topic => {
+      const subject = topic.subject || 'General';
+      if (!subjectsMap[subject]) {
+        subjectsMap[subject] = [];
+      }
+      subjectsMap[subject].push(topic);
+    });
 
-    // 3. Invoke Gemini
+    const uniqueSubjects = Object.keys(subjectsMap);
+    console.log(`[WeeklyRevision] Grouped weekly current affairs into ${uniqueSubjects.length} subjects.`);
+
     const ai = getAiClient();
     const modelName = getGeminiModel();
-    let geminiResponse;
+    const allGeneratedTopics = [];
 
-    const promptText = `
-      You are an elite UPSC current affairs revision mentor. Your task is to convert the provided list of daily current affairs topics from the past week into a concise, high-yield revision study deck.
-      
-      Input Topics List:
-      ${JSON.stringify(topicsToSummarize, null, 2)}
-      
-      Requirements for each topic in the output:
-      1. Map it directly back to its original currentAffairsDate and currentAffairsTopicNumber (these must match the input fields exactly).
-      2. Convert it into a 2-4 line quick revision summary. Focus on core conceptual understandings, facts, and main themes.
-      3. Extract or summarize why it matters for UPSC Mains/Prelims.
-      4. Provide a factsKeywords array containing 3-5 important facts, data points, or keywords.
-      5. Retain or slightly refine the title, gsPaper, subject, and importance for examination clarity.
-      
-      IMPORTANT:
-      - Do not generate or write any detailed Mains essay responses or answers. Keep everything concise for rapid reading in a few minutes.
-      - Base all information strictly on the provided context. Do not invent facts, statistics, or legal articles.
-      - Return the output in the exact JSON format matching the schema.
-    `;
+    // Process subject-by-subject
+    for (let sIdx = 0; sIdx < uniqueSubjects.length; sIdx++) {
+      const subjectName = uniqueSubjects[sIdx];
+      const subjectTopics = subjectsMap[subjectName];
 
-    try {
-      geminiResponse = await ai.models.generateContent({
-        model: modelName,
-        contents: [{ text: promptText }],
-        config: {
-          responseMimeType: "application/json",
-          responseSchema: weeklyRevisionResponseSchema,
+      console.log(`[WeeklyRevision] Subject ${sIdx + 1}/${uniqueSubjects.length}: Sending ${subjectTopics.length} topics for subject "${subjectName}" to Gemini...`);
+
+      const promptText = `
+        You are an elite UPSC current affairs revision mentor. Your task is to convert the provided list of daily current affairs topics under the subject "${subjectName}" from the past week into a concise, high-yield revision study deck.
+        
+        Input Topics List:
+        ${JSON.stringify(subjectTopics, null, 2)}
+        
+        Requirements for each topic in the output:
+        1. Map it directly back to its original currentAffairsDate and currentAffairsTopicNumber (these must match the input fields exactly).
+        2. Convert it into a 2-4 line quick revision summary. Focus on core conceptual understandings, facts, and main themes.
+        3. Extract or summarize why it matters for UPSC Mains/Prelims.
+        4. Provide a factsKeywords array containing 3-5 important facts, data points, or keywords.
+        5. Retain or slightly refine the title, gsPaper, subject, and importance for examination clarity.
+        
+        IMPORTANT:
+        - Do not generate or write any detailed Mains essay responses or answers. Keep everything concise for rapid reading in a few minutes.
+        - Base all information strictly on the provided context. Do not invent facts, statistics, or legal articles.
+        - Return the output in the exact JSON format matching the schema.
+      `;
+
+      try {
+        const geminiResponse = await ai.models.generateContent({
+          model: modelName,
+          contents: [{ text: promptText }],
+          config: {
+            responseMimeType: "application/json",
+            responseSchema: weeklyRevisionResponseSchema,
+          }
+        });
+
+        const payload = JSON.parse(geminiResponse.text);
+        if (payload && payload.topics && Array.isArray(payload.topics)) {
+          allGeneratedTopics.push(...payload.topics);
+          console.log(`[WeeklyRevision] Successfully synthesized ${payload.topics.length} revision cards for subject "${subjectName}".`);
+        } else {
+          console.error(`[WeeklyRevision] Warning: Gemini returned invalid response for subject "${subjectName}". Falling back to database topics.`);
+          subjectTopics.forEach(orig => {
+            allGeneratedTopics.push({
+              title: orig.title,
+              revisionSummary: orig.shortDescription,
+              whyItMatters: orig.analysisPoints ? orig.analysisPoints.join(' ') : 'UPSC relevance to be analyzed.',
+              factsKeywords: [...(orig.facts || []), ...(orig.keywords || [])],
+              currentAffairsDate: orig.currentAffairsDate,
+              currentAffairsTopicNumber: orig.currentAffairsTopicNumber
+            });
+          });
         }
-      });
-    } catch (error) {
-      console.error('[WeeklyRevision] Gemini generation failed:', error.message);
-      throw new Error(`Gemini synthesis failed: ${error.message}`);
+      } catch (error) {
+        console.error(`[WeeklyRevision] Error generating revision for subject "${subjectName}": ${error.message}. Falling back to database topics.`);
+        subjectTopics.forEach(orig => {
+          allGeneratedTopics.push({
+            title: orig.title,
+            revisionSummary: orig.shortDescription,
+            whyItMatters: orig.analysisPoints ? orig.analysisPoints.join(' ') : 'UPSC relevance to be analyzed.',
+            factsKeywords: [...(orig.facts || []), ...(orig.keywords || [])],
+            currentAffairsDate: orig.currentAffairsDate,
+            currentAffairsTopicNumber: orig.currentAffairsTopicNumber
+          });
+        });
+      }
+
+      // Suitable gap/delay between subjects to prevent 429 errors
+      if (sIdx < uniqueSubjects.length - 1 && delayMs > 0) {
+        console.log(`[WeeklyRevision] Waiting ${delayMs / 1000} seconds before next subject request to prevent 429 quota exhaustion...`);
+        await new Promise(resolve => setTimeout(resolve, delayMs));
+      }
     }
 
-    // 4. Parse output
-    let payload;
-    try {
-      payload = JSON.parse(geminiResponse.text);
-    } catch (error) {
-      console.error('[WeeklyRevision] Gemini response is not valid JSON:', geminiResponse.text);
-      throw new Error('Gemini returned an invalid JSON response structure');
+    if (allGeneratedTopics.length === 0) {
+      throw new Error("Weekly revision generation failed: No topics were generated.");
     }
 
-    if (!payload.topics || !Array.isArray(payload.topics)) {
-      throw new Error('Gemini response did not contain a valid topics array');
-    }
+    console.log(`[WeeklyRevision] Consolidated ${allGeneratedTopics.length} revision cards across all subjects. Saving to database...`);
 
-    console.log(`[WeeklyRevision] Generated ${payload.topics.length} revision cards. Saving to database...`);
-
-    // 5. Save to database using upsert
+    // 4. Save to database using upsert with robust database metadata merging
     const savedDoc = await WeeklyRevision.findOneAndUpdate(
       { startDate, endDate },
       {
         startDate,
         endDate,
-        topics: payload.topics.map(t => ({
-          ...t,
-          completed: false // Default to false on generation
-        }))
+        topics: allGeneratedTopics.map((t, idx) => {
+          // Find the matching original topic from the input database topics array to ensure 100% validity
+          const original = topicsToSummarize.find(orig => {
+            const origDateStr = orig.currentAffairsDate; // "YYYY-MM-DD"
+            
+            let tDateStr = '';
+            if (t.currentAffairsDate) {
+              try {
+                tDateStr = new Date(t.currentAffairsDate).toISOString().split('T')[0];
+              } catch (e) {
+                tDateStr = t.currentAffairsDate.toString().split('T')[0];
+              }
+            }
+            
+            return orig.currentAffairsTopicNumber === t.currentAffairsTopicNumber && origDateStr === tDateStr;
+          }) || topicsToSummarize.find(orig => orig.title.toLowerCase() === (t.title || '').toLowerCase())
+             || topicsToSummarize[idx]
+             || topicsToSummarize[0];
+
+          return {
+            title: original.title,
+            revisionSummary: t.revisionSummary || original.shortDescription,
+            whyItMatters: t.whyItMatters || 'UPSC relevance to be analyzed.',
+            factsKeywords: Array.isArray(t.factsKeywords) && t.factsKeywords.length > 0 
+              ? t.factsKeywords 
+              : [...(original.facts || []), ...(original.keywords || [])],
+            classification: {
+              gsPaper: original.gsPaper || 'GS-III',
+              subject: original.subject || 'General'
+            },
+            importance: original.importance || 'MEDIUM',
+            currentAffairsDate: new Date(original.currentAffairsDate),
+            currentAffairsTopicNumber: original.currentAffairsTopicNumber,
+            completed: false // Default to false on generation
+          };
+        })
       },
       { upsert: true, new: true, runValidators: true }
     );

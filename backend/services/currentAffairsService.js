@@ -252,11 +252,72 @@ class CurrentAffairsService {
     const topicCount = payload.topics.length;
     console.log(`[CurrentAffairs] Topics detected: ${topicCount}`);
 
-    // Verify all topics have required parameters
+    // Verify and sanitize all topics to prevent database validation failures
     payload.topics.forEach((topic, idx) => {
       if (!topic.topicNumber) topic.topicNumber = idx + 1;
-      if (!topic.title || !topic.shortDescription) {
-        throw new Error(`Topic at index ${idx} is missing required fields (title, shortDescription)`);
+      if (!topic.originalHeadline) topic.originalHeadline = topic.title || `Topic ${topic.topicNumber}`;
+      if (!topic.title) topic.title = topic.originalHeadline;
+      if (!topic.shortDescription) topic.shortDescription = topic.title;
+
+      // Sanitize classification details
+      if (!topic.classification) topic.classification = {};
+      
+      // Normalize gsPaper to standard enum values
+      let paper = (topic.classification.gsPaper || '').toString().toUpperCase().replace(/\s+/g, '').replace(/[^A-Z0-9-]/g, '');
+      if (paper.includes('GS1') || paper.includes('GS-1') || paper === 'GSI' || paper === 'GS-I' || paper === 'I') {
+        topic.classification.gsPaper = 'GS-I';
+      } else if (paper.includes('GS2') || paper.includes('GS-2') || paper === 'GSII' || paper === 'GS-II' || paper === 'II') {
+        topic.classification.gsPaper = 'GS-II';
+      } else if (paper.includes('GS3') || paper.includes('GS-3') || paper === 'GSIII' || paper === 'GS-III' || paper === 'III') {
+        topic.classification.gsPaper = 'GS-III';
+      } else if (paper.includes('GS4') || paper.includes('GS-4') || paper === 'GSIV' || paper === 'GS-IV' || paper === 'IV') {
+        topic.classification.gsPaper = 'GS-IV';
+      } else {
+        topic.classification.gsPaper = 'GS-III'; // Default fallback
+      }
+
+      if (!topic.classification.subject) topic.classification.subject = 'General';
+      if (!topic.classification.subSubject) topic.classification.subSubject = 'General';
+
+      // Sanitize importance enum
+      let importance = (topic.importance || '').toUpperCase();
+      if (!['HIGH', 'MEDIUM', 'LOW'].includes(importance)) {
+        topic.importance = 'MEDIUM';
+      } else {
+        topic.importance = importance;
+      }
+
+      // Sanitize analysis section
+      if (!topic.analysis) topic.analysis = {};
+      if (!topic.analysis.whatHappened) topic.analysis.whatHappened = topic.shortDescription;
+      if (!topic.analysis.background) topic.analysis.background = 'Context details not provided.';
+      if (!topic.analysis.whyImportant) topic.analysis.whyImportant = 'Significance to be analyzed.';
+      if (!topic.analysis.keyPoints) topic.analysis.keyPoints = [];
+      if (!topic.analysis.governmentMeasures) topic.analysis.governmentMeasures = [];
+      if (!topic.analysis.challenges) topic.analysis.challenges = [];
+      if (!topic.analysis.wayForward) topic.analysis.wayForward = [];
+
+      // Sanitize prelims section
+      if (!topic.prelims) topic.prelims = {};
+      if (!topic.prelims.facts) topic.prelims.facts = [];
+      if (!topic.prelims.keywords) topic.prelims.keywords = [];
+
+      // Sanitize revision active-recall questions
+      if (!topic.revision) topic.revision = {};
+      if (!topic.revision.question) topic.revision.question = `What are the primary aspects of: ${topic.title}?`;
+      if (!topic.revision.answer) topic.revision.answer = topic.shortDescription;
+
+      // Sanitize sources citations list
+      if (!topic.sources || !Array.isArray(topic.sources)) {
+        topic.sources = [];
+      } else {
+        topic.sources.forEach(src => {
+          if (!src.title) src.title = 'Reference URL';
+          if (!src.url) src.url = 'https://www.google.com';
+          if (!src.sourceType || !['official', 'media', 'other'].includes(src.sourceType)) {
+            src.sourceType = 'other';
+          }
+        });
       }
     });
 

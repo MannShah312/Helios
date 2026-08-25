@@ -7,18 +7,23 @@ const connectDB = require('./config/db');
 // Connect to MongoDB Atlas
 connectDB();
 
-// Scheduler to generate weekly revision every Sunday at 8:00 AM
+// Scheduler to generate weekly revision every Sunday starting at 7:00 AM and spacing it out
 const startWeeklyRevisionScheduler = () => {
   console.log('⏰ Weekly Revision Scheduler initialized (checks every minute).');
   setInterval(async () => {
     try {
       const now = new Date();
-      // Check if Sunday (0) at 08:00 AM local time
-      if (now.getDay() === 0 && now.getHours() === 8 && now.getMinutes() === 0) {
-        console.log('[Scheduler] Sunday 8:00 AM reached. Triggering Weekly Revision generation...');
+      // Check if Sunday (0) at 07:00 AM local time
+      if (now.getDay() === 0 && now.getHours() === 7 && now.getMinutes() === 0) {
+        console.log('[Scheduler] Sunday 7:00 AM reached. Triggering Weekly Revision generation...');
         const weeklyRevisionService = require('./services/weeklyRevisionService');
-        const range = weeklyRevisionService.getCycleRange(now);
-        await weeklyRevisionService.generateWeeklyRevision(range.startDate, range.endDate);
+        // Explicitly set cycle ending today at 7:30 AM
+        const endDate = new Date(now);
+        endDate.setHours(7, 30, 0, 0);
+        const startDate = new Date(endDate);
+        startDate.setDate(endDate.getDate() - 7);
+
+        await weeklyRevisionService.generateWeeklyRevision(startDate, endDate, 300000); // 5-minute gap between subjects
         console.log('[Scheduler] Weekly Revision generation cycle completed successfully.');
       }
     } catch (err) {
