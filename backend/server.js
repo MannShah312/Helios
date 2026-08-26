@@ -33,6 +33,27 @@ const startWeeklyRevisionScheduler = () => {
 };
 startWeeklyRevisionScheduler();
 
+// Scheduler: Generate daily notes at 10:00 AM IST (= 04:30 AM UTC) every day
+const startDailyNotesScheduler = () => {
+  console.log('⏰ Daily Notes Scheduler initialized (checks every minute).');
+  setInterval(async () => {
+    try {
+      const now = new Date();
+      // 10:00 AM IST = 04:30 AM UTC
+      if (now.getUTCHours() === 4 && now.getUTCMinutes() === 30) {
+        console.log('[DailyNotes Scheduler] 10:00 AM IST reached. Triggering daily notes generation...');
+        const dailyNotesService = require('./services/dailyNotesService');
+        const results = await dailyNotesService.generateDailyNotes();
+        const successCount = results.filter(r => r.status === 'success').length;
+        console.log(`[DailyNotes Scheduler] Generation complete. ${successCount} notes created.`);
+      }
+    } catch (err) {
+      console.error('[DailyNotes Scheduler] Error running daily notes cycle:', err.message);
+    }
+  }, 60000); // check every minute
+};
+startDailyNotesScheduler();
+
 const PORT = process.env.PORT || 5000;
 
 const server = app.listen(PORT, () => {

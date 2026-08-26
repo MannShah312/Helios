@@ -1,9 +1,10 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { 
   Sun, Moon, Menu, X, Upload, FileText, Image as ImageIcon, 
-  ChevronLeft, ArrowRight, Bookmark, Search, Calendar, CheckCircle2,
+  ChevronLeft, ChevronRight, ArrowRight, ArrowLeft, Bookmark, Search, Calendar, CheckCircle2,
   BookOpen, Globe, Cpu, Leaf, Landmark, MoreHorizontal, RefreshCw,
-  ArrowUpRight, Flame, Target, Mic, PenTool, Book, Clock, AlertCircle, HelpCircle, Eye, EyeOff, ExternalLink, Bell
+  ArrowUpRight, Flame, Target, Mic, PenTool, Book, Clock, AlertCircle, HelpCircle, Eye, EyeOff, ExternalLink, Bell,
+  BookMarked, Layers, Sparkles, GraduationCap, ScrollText
 } from 'lucide-react';
 
 const mockCategories = [
@@ -18,14 +19,14 @@ const mockCategories = [
 const mockQuickAccess = [
   { id: 1, title: 'Current Affairs', subtitle: 'Read & Analyze', icon: FileText, color: 'text-orange-500', bg: 'bg-orange-50 dark:bg-orange-500/10' },
   { id: 2, title: 'Syllabus Tracker', subtitle: 'Track & Covered', icon: Target, color: 'text-indigo-500', bg: 'bg-indigo-50 dark:bg-indigo-500/10' },
-  { id: 3, title: 'Mains Practice', subtitle: 'Answer Writing', icon: PenTool, color: 'text-purple-500', bg: 'bg-purple-50 dark:bg-purple-500/10' },
-  { id: 4, title: 'Interview Prep', subtitle: 'Personality Q.', icon: Mic, color: 'text-red-500', bg: 'bg-red-50 dark:bg-red-500/10' },
-  { id: 5, title: 'PYQ Bank', subtitle: 'Topic-wise PYQs', icon: Book, color: 'text-blue-500', bg: 'bg-blue-50 dark:bg-blue-500/10' },
+  { id: 3, title: 'Study Notes', subtitle: "Today's Topic", icon: BookMarked, color: 'text-amber-600', bg: 'bg-amber-50 dark:bg-amber-500/10', isNotes: true },
+  { id: 4, title: 'Mains Practice', subtitle: 'Answer Writing', icon: PenTool, color: 'text-purple-500', bg: 'bg-purple-50 dark:bg-purple-500/10' },
+  { id: 5, title: 'Interview Prep', subtitle: 'Personality Q.', icon: Mic, color: 'text-red-500', bg: 'bg-red-50 dark:bg-red-500/10' },
   { id: 6, title: 'Revision', subtitle: 'Smart Revision', icon: RefreshCw, color: 'text-amber-500', bg: 'bg-amber-50 dark:bg-amber-500/10' },
 ];
 
 const App = () => {
-  const [currentView, setCurrentView] = useState('upload'); // 'upload', 'processing', 'list', 'details', 'weekly-revision'
+  const [currentView, setCurrentView] = useState('upload'); // 'upload', 'processing', 'list', 'details', 'weekly-revision', 'notes', 'notes-lesson'
   const [isDarkMode, setIsDarkMode] = useState(false);
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [selectedFile, setSelectedFile] = useState(null);
@@ -42,6 +43,15 @@ const App = () => {
   // Weekly Revision States
   const [weeklyRevisionStats, setWeeklyRevisionStats] = useState({ completed: 0, total: 0, remaining: 0 });
   const [weeklyRevision, setWeeklyRevision] = useState(null);
+
+  // Daily Notes / Study Notes States
+  const [notesSubjects, setNotesSubjects] = useState([]);
+  const [activeNotesSubject, setActiveNotesSubject] = useState(null); // e.g. 'modern-history'
+  const [activeDailyNote, setActiveDailyNote] = useState(null);
+  const [notesRevealedAnswers, setNotesRevealedAnswers] = useState({}); // { qIndex: true }
+  const [loadingNote, setLoadingNote] = useState(false);
+  const [notesList, setNotesList] = useState([]); // all notes for the active subject
+
 
   // Syllabus Tracker States
   const [backView, setBackView] = useState('list');
@@ -165,7 +175,9 @@ const App = () => {
     fetchDateData(todayStr);
     fetchWeeklyRevisionStats();
     fetchSyllabus();
+    fetchNotesSubjects();
   }, []);
+
 
   const toggleTheme = () => setIsDarkMode(!isDarkMode);
 
@@ -265,6 +277,97 @@ const App = () => {
       setLoadingSyllabus(false);
     }
   };
+
+  // ── Notes helpers ──────────────────────────────────────────────────────────
+
+  const fetchNotesSubjects = async () => {
+    try {
+      const res = await fetch('/api/daily-notes/subjects');
+      const json = await res.json();
+      if (json.success && json.data) {
+        setNotesSubjects(json.data);
+      }
+    } catch (err) {
+      console.error('Error fetching notes subjects:', err);
+    }
+  };
+
+  const openNotesSubject = async (subject) => {
+    setActiveNotesSubject(subject);
+    setCurrentView('notes');
+    setLoadingNote(true);
+    try {
+      const res = await fetch(`/api/daily-notes/${subject}/all`);
+      const json = await res.json();
+      if (json.success) {
+        setNotesList(json.data || []);
+      }
+    } catch (err) {
+      console.error('Error fetching notes list:', err);
+    } finally {
+      setLoadingNote(false);
+    }
+  };
+
+  const openNotesLesson = async (subject, order) => {
+    setLoadingNote(true);
+    setNotesRevealedAnswers({});
+    try {
+      const res = await fetch(`/api/daily-notes/${subject}/topic/${order}`);
+      const json = await res.json();
+      if (json.success && json.data) {
+        setActiveDailyNote(json.data);
+        setCurrentView('notes-lesson');
+        // Mark as read in syllabusCompleted
+        const readKey = `notes_${subject}_${order}`;
+        setSyllabusCompleted(prev => {
+          if (!prev[readKey]) {
+            const updated = { ...prev, [readKey]: true };
+            localStorage.setItem('helios_syllabus_completed', JSON.stringify(updated));
+            return updated;
+          }
+          return prev;
+        });
+      }
+    } catch (err) {
+      console.error('Error fetching note:', err);
+    } finally {
+      setLoadingNote(false);
+    }
+  };
+
+  const openTodayNote = async (subject) => {
+    setLoadingNote(true);
+    setNotesRevealedAnswers({});
+    try {
+      const res = await fetch(`/api/daily-notes/${subject}/today`);
+      const json = await res.json();
+      if (json.success && json.data) {
+        setActiveDailyNote(json.data);
+        setActiveNotesSubject(subject);
+        setCurrentView('notes-lesson');
+        const readKey = `notes_${subject}_${json.data.topicOrder}`;
+        setSyllabusCompleted(prev => {
+          if (!prev[readKey]) {
+            const updated = { ...prev, [readKey]: true };
+            localStorage.setItem('helios_syllabus_completed', JSON.stringify(updated));
+            return updated;
+          }
+          return prev;
+        });
+      }
+    } catch (err) {
+      console.error('Error fetching today note:', err);
+    } finally {
+      setLoadingNote(false);
+    }
+  };
+
+  const toggleNoteAnswer = (idx) => {
+    setNotesRevealedAnswers(prev => ({ ...prev, [idx]: !prev[idx] }));
+  };
+
+
 
   const toggleSyllabusSubtopic = (key) => {
     setSyllabusCompleted(prev => {
@@ -607,7 +710,9 @@ const App = () => {
                )}
                <button onClick={() => { handleStartWeeklyRevision(); setIsMenuOpen(false); }} className="w-full text-left p-3 rounded-xl hover:bg-slate-50 dark:hover:bg-slate-800 text-slate-700 dark:text-slate-300 text-sm font-medium">Weekly Revision</button>
                <button onClick={() => { setCurrentView('syllabus-tracker'); setIsMenuOpen(false); }} className="w-full text-left p-3 rounded-xl hover:bg-slate-50 dark:hover:bg-slate-800 text-slate-700 dark:text-slate-300 text-sm font-medium font-semibold text-indigo-600 dark:text-indigo-400">Syllabus Tracker</button>
+               <button onClick={() => { setCurrentView('notes'); fetchNotesSubjects(); setIsMenuOpen(false); }} className="w-full text-left p-3 rounded-xl hover:bg-slate-50 dark:hover:bg-slate-800 text-amber-600 dark:text-amber-400 text-sm font-semibold flex items-center gap-2"><BookMarked size={16} /> Study Notes</button>
             </div>
+
           </div>
         </div>
       </div>
@@ -884,37 +989,55 @@ const App = () => {
           {/* Quick Access Grid */}
           <div>
             <div className="flex items-center justify-between mb-5">
-              <h3 className="text-lg font-bold text-slate-900 dark:text-white">Quick Access</h3>
+             <h3 className="text-lg font-bold text-slate-900 dark:text-white">Quick Access</h3>
             </div>
             <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3 md:gap-4">
-               {mockQuickAccess.map((item) => (
-                 <button 
-                   key={item.id}
-                   disabled={item.title === 'Current Affairs' && !currentAffairs}
-                   onClick={() => {
-                     if (item.title === 'Current Affairs') {
-                       setCurrentView('list');
-                     } else if (item.title === 'Revision') {
-                       handleStartWeeklyRevision();
-                     } else if (item.title === 'Syllabus Tracker') {
-                       setCurrentView('syllabus-tracker');
-                     }
-                   }}
-                   className="bg-white dark:bg-slate-900 rounded-2xl p-4 md:p-5 flex flex-col items-center justify-center text-center shadow-[0_4px_20px_rgb(0,0,0,0.03)] border border-slate-100 dark:border-slate-800 hover:-translate-y-1 transition-all group disabled:opacity-50 disabled:cursor-not-allowed"
-                 >
-                   <div className={`w-12 h-12 rounded-2xl ${item.bg} ${item.color} flex items-center justify-center mb-3 group-hover:scale-110 transition-transform`}>
-                     <item.icon size={24} />
-                   </div>
-                   <h4 className="text-sm font-bold text-slate-900 dark:text-white mb-1 leading-tight">{item.title}</h4>
-                   <p className="text-[10px] text-slate-500 dark:text-slate-400 font-medium">{item.subtitle}</p>
-                 </button>
-               ))}
+               {mockQuickAccess.map((item) => {
+                 // For the Notes card, dynamically show today's topic as subtitle
+                 let dynamicSubtitle = item.subtitle;
+                 if (item.isNotes && notesSubjects.length > 0) {
+                   const modernHistory = notesSubjects.find(s => s.subject === 'modern-history');
+                   if (modernHistory?.todayLesson) {
+                     dynamicSubtitle = `Ep.${modernHistory.todayLesson.topicOrder} · History`;
+                   }
+                 }
+                 return (
+                   <button
+                     key={item.id}
+                     disabled={item.title === 'Current Affairs' && !currentAffairs}
+                     onClick={() => {
+                       if (item.title === 'Current Affairs') {
+                         setCurrentView('list');
+                       } else if (item.title === 'Revision') {
+                         handleStartWeeklyRevision();
+                       } else if (item.title === 'Syllabus Tracker') {
+                         setCurrentView('syllabus-tracker');
+                       } else if (item.isNotes) {
+                         setCurrentView('notes');
+                         fetchNotesSubjects();
+                       }
+                     }}
+                     className={`bg-white dark:bg-slate-900 rounded-2xl p-4 md:p-5 flex flex-col items-center justify-center text-center shadow-[0_4px_20px_rgb(0,0,0,0.03)] border transition-all group disabled:opacity-50 disabled:cursor-not-allowed hover:-translate-y-1 ${
+                       item.isNotes
+                         ? 'border-amber-200/60 dark:border-amber-800/30 shadow-amber-100/50 dark:shadow-none'
+                         : 'border-slate-100 dark:border-slate-800'
+                     }`}
+                   >
+                     <div className={`w-12 h-12 rounded-2xl ${item.bg} ${item.color} flex items-center justify-center mb-3 group-hover:scale-110 transition-transform`}>
+                       <item.icon size={24} />
+                     </div>
+                     <h4 className="text-sm font-bold text-slate-900 dark:text-white mb-1 leading-tight">{item.title}</h4>
+                     <p className="text-[10px] text-slate-500 dark:text-slate-400 font-medium">{dynamicSubtitle}</p>
+                   </button>
+                 );
+               })}
             </div>
           </div>
         </main>
       </div>
     );
   };
+
 
   const ProcessingScreen = () => {
     const steps = [
@@ -2316,6 +2439,385 @@ const App = () => {
     );
   };
 
+  // ── NOTES SUBJECT SCREEN ────────────────────────────────────────────────────
+  const NotesSubjectScreen = () => {
+    const SUBJECT_DISPLAY = {
+      'modern-history': { name: 'Modern History', paper: 'GS-I', color: 'text-amber-600', bg: 'from-amber-500/10 to-orange-500/10 border-amber-200 dark:border-amber-900/30', barColor: 'from-amber-500 to-orange-400', icon: ScrollText },
+      'polity': { name: 'Polity & Governance', paper: 'GS-II', color: 'text-blue-600', bg: 'from-blue-500/10 to-indigo-500/10 border-blue-200 dark:border-blue-900/30', barColor: 'from-blue-500 to-indigo-400', icon: Landmark },
+      'geography': { name: 'Geography', paper: 'GS-I', color: 'text-teal-600', bg: 'from-teal-500/10 to-emerald-500/10 border-teal-200 dark:border-teal-900/30', barColor: 'from-teal-500 to-emerald-400', icon: Globe },
+      'economy': { name: 'Economy', paper: 'GS-III', color: 'text-emerald-600', bg: 'from-emerald-500/10 to-green-500/10 border-emerald-200 dark:border-emerald-900/30', barColor: 'from-emerald-500 to-teal-400', icon: BookOpen },
+    };
+
+    return (
+      <div className="flex-1 flex flex-col min-h-screen bg-[#FDFAF5] dark:bg-[#0B1120] transition-colors">
+        <Header showBack={true} onBack={() => setCurrentView('upload')} />
+
+        {/* Hero Banner */}
+        <div className="bg-gradient-to-br from-amber-50 via-orange-50/50 to-white dark:from-slate-900 dark:via-slate-900 dark:to-[#0B1120] border-b border-amber-100/60 dark:border-slate-800/50">
+          <div className="max-w-5xl mx-auto px-4 pt-8 pb-6">
+            <div className="flex items-center gap-3 mb-2">
+              <div className="w-10 h-10 bg-amber-500/10 rounded-2xl flex items-center justify-center">
+                <BookMarked size={22} className="text-amber-600" />
+              </div>
+              <div>
+                <h1 className="text-2xl font-extrabold text-slate-900 dark:text-white tracking-tight">Study Notes</h1>
+                <p className="text-xs font-bold text-amber-600 dark:text-amber-400 uppercase tracking-widest">Daily AI-Generated Lessons · 10 AM</p>
+              </div>
+            </div>
+            <p className="text-sm text-slate-500 dark:text-slate-400 mt-3 max-w-lg">
+              One topic daily, told as a connected story. Understand what happened, why it happened, and what it led to — in one sitting.
+            </p>
+          </div>
+        </div>
+
+        <main className="flex-1 max-w-5xl w-full mx-auto px-4 py-8 pb-24">
+          <h2 className="text-base font-bold text-slate-500 dark:text-slate-400 uppercase tracking-widest mb-5">Choose a Subject</h2>
+
+          {notesSubjects.length === 0 ? (
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
+              {/* Placeholder cards when no notes yet */}
+              {['modern-history', 'polity', 'geography', 'economy'].map(subj => {
+                const meta = SUBJECT_DISPLAY[subj] || { name: subj, paper: 'GS', color: 'text-slate-500', bg: 'border-slate-200', barColor: 'from-slate-400 to-slate-500', icon: Book };
+                const Icon = meta.icon;
+                return (
+                  <div key={subj} className={`bg-white dark:bg-slate-900 rounded-[1.75rem] p-6 border bg-gradient-to-br ${meta.bg} shadow-sm opacity-60`}>
+                    <div className="flex items-center gap-3 mb-4">
+                      <div className={`p-2.5 rounded-xl bg-white/60 dark:bg-slate-800/60 ${meta.color}`}>
+                        <Icon size={20} />
+                      </div>
+                      <div>
+                        <h3 className="font-extrabold text-slate-900 dark:text-white text-base">{meta.name}</h3>
+                        <span className="text-[10px] uppercase font-bold text-slate-400">{meta.paper}</span>
+                      </div>
+                    </div>
+                    <p className="text-xs text-slate-500 dark:text-slate-400">No lessons generated yet. First lesson auto-generates at 10 AM.</p>
+                  </div>
+                );
+              })}
+            </div>
+          ) : (
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
+              {notesSubjects.map(sub => {
+                const meta = SUBJECT_DISPLAY[sub.subject] || { name: sub.displayName || sub.subject, paper: sub.gsPaper || 'GS', color: 'text-slate-600', bg: 'border-slate-200', barColor: 'from-slate-400 to-slate-500', icon: Book };
+                const Icon = meta.icon;
+                const generated = sub.generatedCount || 0;
+                const total = sub.totalTopicsInSequence || 0;
+                const percent = total > 0 ? Math.round((generated / total) * 100) : 0;
+
+                return (
+                  <div
+                    key={sub.subject}
+                    onClick={() => openNotesSubject(sub.subject)}
+                    className={`bg-white dark:bg-slate-900 rounded-[1.75rem] p-6 border bg-gradient-to-br ${meta.bg} shadow-sm cursor-pointer hover:shadow-md hover:-translate-y-1 transition-all group`}
+                  >
+                    {/* Header */}
+                    <div className="flex items-start justify-between mb-5">
+                      <div className="flex items-center gap-3">
+                        <div className={`p-2.5 rounded-xl bg-white/70 dark:bg-slate-800/60 ${meta.color} group-hover:scale-110 transition-transform`}>
+                          <Icon size={20} />
+                        </div>
+                        <div>
+                          <h3 className="font-extrabold text-slate-900 dark:text-white text-base leading-tight">{meta.name}</h3>
+                          <span className="text-[10px] uppercase font-bold text-slate-400">{meta.paper}</span>
+                        </div>
+                      </div>
+                      <span className={`text-[10px] font-bold px-2.5 py-1 rounded-full ${meta.color} bg-white/80 dark:bg-slate-800/80 border border-current/10`}>
+                        {generated} / {total} topics
+                      </span>
+                    </div>
+
+                    {/* Today's lesson highlight */}
+                    {sub.todayLesson ? (
+                      <div className="mb-4 p-3 bg-white/60 dark:bg-slate-800/50 rounded-xl border border-white/80 dark:border-slate-700/50">
+                        <p className="text-[10px] font-bold text-amber-600 dark:text-amber-400 uppercase tracking-wider mb-1 flex items-center gap-1">
+                          <Sparkles size={10} /> Today's Episode
+                        </p>
+                        <p className="text-xs font-bold text-slate-800 dark:text-white leading-snug line-clamp-2">
+                          {sub.todayLesson.part && <span className="text-slate-400 mr-1">{sub.todayLesson.part} ·</span>}
+                          {sub.todayLesson.title}
+                        </p>
+                        <button
+                          onClick={(e) => { e.stopPropagation(); openTodayNote(sub.subject); }}
+                          className={`mt-2 text-[10px] font-bold ${meta.color} flex items-center gap-1 hover:opacity-70 transition-opacity`}
+                        >
+                          Read Today's Lesson <ChevronRight size={12} />
+                        </button>
+                      </div>
+                    ) : (
+                      <div className="mb-4 p-3 bg-white/40 dark:bg-slate-800/30 rounded-xl border border-white/60 dark:border-slate-700/50">
+                        <p className="text-xs text-slate-500 dark:text-slate-400">
+                          {generated === 0 ? 'Auto-generates at 10 AM IST daily' : 'Today\'s lesson pending...'}
+                        </p>
+                      </div>
+                    )}
+
+                    {/* Progress bar */}
+                    <div>
+                      <div className="flex justify-between text-[10px] font-bold text-slate-500 dark:text-slate-400 mb-1.5">
+                        <span>Progress</span>
+                        <span>{percent}%</span>
+                      </div>
+                      <div className="w-full h-1.5 bg-slate-100 dark:bg-slate-800 rounded-full overflow-hidden">
+                        <div
+                          className={`h-full bg-gradient-to-r ${meta.barColor} transition-all duration-500`}
+                          style={{ width: `${percent}%` }}
+                        />
+                      </div>
+                    </div>
+                  </div>
+                );
+              })}
+
+              {/* Coming Soon subjects */}
+              {['polity', 'geography', 'economy'].filter(s => !notesSubjects.find(n => n.subject === s)).map(subj => {
+                const meta = SUBJECT_DISPLAY[subj] || { name: subj, paper: 'GS', color: 'text-slate-500', bg: 'border-slate-200', barColor: 'from-slate-400 to-slate-500', icon: Book };
+                const Icon = meta.icon;
+                return (
+                  <div key={subj} className={`bg-white/50 dark:bg-slate-900/50 rounded-[1.75rem] p-6 border border-dashed border-slate-200 dark:border-slate-800 opacity-50 cursor-not-allowed`}>
+                    <div className="flex items-center gap-3 mb-3">
+                      <div className={`p-2.5 rounded-xl bg-slate-100 dark:bg-slate-800 ${meta.color}`}>
+                        <Icon size={20} />
+                      </div>
+                      <div>
+                        <h3 className="font-extrabold text-slate-600 dark:text-slate-400 text-base">{meta.name}</h3>
+                        <span className="text-[10px] uppercase font-bold text-slate-400">{meta.paper}</span>
+                      </div>
+                    </div>
+                    <p className="text-xs text-slate-400">Coming soon</p>
+                  </div>
+                );
+              })}
+            </div>
+          )}
+        </main>
+      </div>
+    );
+  };
+
+  // ── NOTES LESSON SCREEN ─────────────────────────────────────────────────────
+  const NotesLessonScreen = () => {
+    if (!activeDailyNote) return null;
+    const note = activeDailyNote;
+    const subject = activeNotesSubject || note.subject;
+    const hasPrev = note.connecting?.prevOrder != null;
+    const hasNext = note.connecting?.nextOrder != null;
+
+    const NavPills = () => (
+      <div className="flex items-center justify-between gap-2 mb-6">
+        <button
+          disabled={!hasPrev}
+          onClick={() => openNotesLesson(subject, note.connecting.prevOrder)}
+          className={`flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-bold transition-all ${
+            hasPrev
+              ? 'bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-300 hover:border-amber-400 hover:text-amber-600'
+              : 'opacity-30 bg-slate-50 dark:bg-slate-900 border border-slate-100 dark:border-slate-800 text-slate-400 cursor-not-allowed'
+          }`}
+        >
+          <ArrowLeft size={14} />
+          {hasPrev ? <span className="truncate max-w-[100px]">{note.connecting.prevTitle?.split('—')[0]?.trim() || 'Prev'}</span> : 'Start'}
+        </button>
+
+        <div className="text-center flex-1 px-2">
+          <p className="text-[10px] text-slate-400 font-bold uppercase tracking-wider">{subject.replace('-', ' ')}</p>
+          <p className="text-xs font-extrabold text-slate-700 dark:text-slate-200">Episode {note.topicOrder}</p>
+          {note.part && <p className="text-[9px] text-amber-500 font-bold">{note.part}</p>}
+        </div>
+
+        <button
+          disabled={!hasNext}
+          onClick={() => openNotesLesson(subject, note.connecting.nextOrder)}
+          className={`flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-bold transition-all ${
+            hasNext
+              ? 'bg-amber-500 text-white hover:bg-amber-600 shadow-sm shadow-amber-500/20'
+              : 'opacity-30 bg-slate-50 dark:bg-slate-900 border border-slate-100 dark:border-slate-800 text-slate-400 cursor-not-allowed'
+          }`}
+        >
+          {hasNext ? <span className="truncate max-w-[100px]">{note.connecting.nextTitle?.split('—')[0]?.trim() || 'Next'}</span> : 'End'}
+          <ArrowRight size={14} />
+        </button>
+      </div>
+    );
+
+    return (
+      <div className="flex-1 flex flex-col min-h-screen bg-[#FDFAF5] dark:bg-[#0B1120] transition-colors">
+        <Header showBack={true} onBack={() => { setCurrentView('notes'); }} />
+
+        {loadingNote ? (
+          <div className="flex-1 flex items-center justify-center">
+            <div className="flex flex-col items-center gap-4">
+              <div className="w-12 h-12 border-4 border-amber-500 border-t-transparent rounded-full animate-spin" />
+              <p className="text-sm font-semibold text-slate-500">Loading lesson...</p>
+            </div>
+          </div>
+        ) : (
+          <main className="flex-1 max-w-3xl w-full mx-auto px-4 py-6 pb-28">
+            <NavPills />
+
+            {/* Topic Title */}
+            <div className="mb-6">
+              <span className="text-[10px] font-bold uppercase tracking-widest text-amber-600 dark:text-amber-400">
+                {subject.replace(/-/g, ' ')} · Episode {note.topicOrder}
+                {note.part && ` · ${note.part}`}
+              </span>
+              <h1 className="text-2xl md:text-3xl font-extrabold text-slate-900 dark:text-white mt-1 leading-tight tracking-tight">
+                {note.title}
+              </h1>
+            </div>
+
+            {/* ── SECTION 1: QUICK GLIMPSE ── */}
+            {note.quickGlimpse?.flow?.length > 0 && (
+              <div className="bg-gradient-to-br from-amber-50 to-orange-50/30 dark:from-amber-950/20 dark:to-orange-950/10 border border-amber-200/60 dark:border-amber-800/30 rounded-2xl p-5 mb-5">
+                <div className="flex items-center gap-2 mb-4">
+                  <Sparkles size={14} className="text-amber-500" />
+                  <h2 className="text-[11px] font-black uppercase tracking-widest text-amber-700 dark:text-amber-400">Quick Glimpse</h2>
+                </div>
+                <div className="flex flex-col sm:flex-row items-start sm:items-center gap-2 sm:gap-0 overflow-x-auto">
+                  {note.quickGlimpse.flow.map((step, i) => (
+                    <div key={i} className="flex items-center gap-2 shrink-0">
+                      <div className="flex flex-col items-center">
+                        <div className="w-2 h-2 rounded-full bg-amber-500 mb-1 sm:hidden" />
+                        <div className="text-xs font-semibold text-slate-700 dark:text-slate-200 bg-white/70 dark:bg-slate-800/70 px-3 py-1.5 rounded-lg border border-amber-200/50 dark:border-amber-800/20 max-w-[160px] text-center leading-snug">
+                          {step}
+                        </div>
+                      </div>
+                      {i < note.quickGlimpse.flow.length - 1 && (
+                        <ChevronRight size={16} className="text-amber-400 shrink-0 hidden sm:block mx-1" />
+                      )}
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* ── SECTION 2: THE STORY ── */}
+            <div className="bg-white dark:bg-slate-900 rounded-2xl p-6 md:p-8 mb-5 border border-slate-200/50 dark:border-slate-800 shadow-sm">
+              <h2 className="text-[11px] font-black uppercase tracking-widest text-slate-400 mb-5 flex items-center gap-2">
+                <ScrollText size={13} /> The Story
+              </h2>
+              <div className="prose-custom">
+                {note.story.split('\n\n').map((para, i) => (
+                  para.trim() && (
+                    <p key={i} className="text-slate-700 dark:text-slate-300 text-[15px] leading-[1.8] mb-4 last:mb-0 font-[400]">
+                      {para.trim()}
+                    </p>
+                  )
+                ))}
+              </div>
+            </div>
+
+            {/* ── SECTION 3: CONNECTING THE STORY ── */}
+            {note.connecting?.connectionText && (
+              <div className="bg-gradient-to-br from-slate-800 to-slate-900 dark:from-slate-800 dark:to-slate-950 rounded-2xl p-5 mb-5 text-white border border-slate-700/50">
+                <h2 className="text-[11px] font-black uppercase tracking-widest text-slate-400 mb-4 flex items-center gap-2">
+                  <Layers size={13} /> Connecting the Story
+                </h2>
+                {/* Prev → Current → Next pills */}
+                <div className="flex items-center gap-2 mb-4 flex-wrap">
+                  {hasPrev && (
+                    <button
+                      onClick={() => openNotesLesson(subject, note.connecting.prevOrder)}
+                      className="text-[10px] font-bold px-3 py-1.5 rounded-full bg-slate-700 text-slate-300 hover:bg-slate-600 transition-colors flex items-center gap-1 border border-slate-600"
+                    >
+                      <ArrowLeft size={10} /> {note.connecting.prevTitle?.split('—')[0]?.trim() || 'Previous'}
+                    </button>
+                  )}
+                  <div className="text-[10px] font-black px-3 py-1.5 rounded-full bg-amber-500 text-white">
+                    ● Today
+                  </div>
+                  {hasNext && (
+                    <button
+                      onClick={() => openNotesLesson(subject, note.connecting.nextOrder)}
+                      className="text-[10px] font-bold px-3 py-1.5 rounded-full bg-slate-700 text-slate-300 hover:bg-slate-600 transition-colors flex items-center gap-1 border border-slate-600"
+                    >
+                      {note.connecting.nextTitle?.split('—')[0]?.trim() || 'Next'} <ArrowRight size={10} />
+                    </button>
+                  )}
+                </div>
+                {note.connecting.connectionText.split('\n\n').map((para, i) => (
+                  para.trim() && (
+                    <p key={i} className="text-slate-300 text-sm leading-relaxed mb-3 last:mb-0">
+                      {para.trim()}
+                    </p>
+                  )
+                ))}
+              </div>
+            )}
+
+            {/* ── SECTION 4: UPSC TAKEAWAYS ── */}
+            {(note.upscTakeaways?.prelims?.length > 0 || note.upscTakeaways?.mains?.length > 0) && (
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-5">
+                {/* Prelims */}
+                {note.upscTakeaways?.prelims?.length > 0 && (
+                  <div className="bg-blue-50/60 dark:bg-blue-950/20 border border-blue-100 dark:border-blue-900/30 rounded-2xl p-5">
+                    <h2 className="text-[11px] font-black uppercase tracking-widest text-blue-700 dark:text-blue-400 mb-3 flex items-center gap-1.5">
+                      <Target size={13} /> Prelims Facts
+                    </h2>
+                    <ol className="space-y-2">
+                      {note.upscTakeaways.prelims.map((fact, i) => (
+                        <li key={i} className="flex items-start gap-2">
+                          <span className="text-[10px] font-black text-blue-500 bg-blue-100 dark:bg-blue-900/40 w-4 h-4 rounded flex items-center justify-center shrink-0 mt-0.5">{i+1}</span>
+                          <p className="text-xs text-slate-700 dark:text-slate-300 leading-relaxed font-medium">{fact}</p>
+                        </li>
+                      ))}
+                    </ol>
+                  </div>
+                )}
+                {/* Mains */}
+                {note.upscTakeaways?.mains?.length > 0 && (
+                  <div className="bg-purple-50/60 dark:bg-purple-950/20 border border-purple-100 dark:border-purple-900/30 rounded-2xl p-5">
+                    <h2 className="text-[11px] font-black uppercase tracking-widest text-purple-700 dark:text-purple-400 mb-3 flex items-center gap-1.5">
+                      <PenTool size={13} /> Mains Angles
+                    </h2>
+                    <ol className="space-y-2">
+                      {note.upscTakeaways.mains.map((angle, i) => (
+                        <li key={i} className="flex items-start gap-2">
+                          <span className="text-[10px] font-black text-purple-500 bg-purple-100 dark:bg-purple-900/40 w-4 h-4 rounded flex items-center justify-center shrink-0 mt-0.5">{i+1}</span>
+                          <p className="text-xs text-slate-700 dark:text-slate-300 leading-relaxed font-medium">{angle}</p>
+                        </li>
+                      ))}
+                    </ol>
+                  </div>
+                )}
+              </div>
+            )}
+
+            {/* ── SECTION 5: QUICK CHECK ── */}
+            {note.quickCheck?.length > 0 && (
+              <div className="bg-amber-50/50 dark:bg-amber-950/10 border border-amber-200/50 dark:border-amber-800/20 rounded-2xl p-5 mb-6">
+                <h2 className="text-[11px] font-black uppercase tracking-widest text-amber-700 dark:text-amber-400 mb-4 flex items-center gap-1.5">
+                  <HelpCircle size={13} /> Quick Check — Active Recall
+                </h2>
+                <div className="flex flex-col gap-4">
+                  {note.quickCheck.map((qna, i) => (
+                    <div key={i} className="bg-white dark:bg-slate-900 rounded-xl p-4 border border-amber-100/60 dark:border-slate-800 shadow-sm">
+                      <p className="text-sm font-bold text-slate-800 dark:text-white mb-3 leading-snug">
+                        Q{i+1}. {qna.question}
+                      </p>
+                      <button
+                        onClick={() => toggleNoteAnswer(i)}
+                        className="flex items-center gap-1.5 text-xs font-bold text-amber-600 dark:text-amber-400 bg-amber-50 dark:bg-amber-950/30 hover:bg-amber-100 dark:hover:bg-amber-900/40 border border-amber-200/50 dark:border-amber-800/30 px-3 py-1.5 rounded-lg transition-colors"
+                      >
+                        {notesRevealedAnswers[i] ? <><EyeOff size={13} /> Hide Answer</> : <><Eye size={13} /> Show Answer</>}
+                      </button>
+                      {notesRevealedAnswers[i] && (
+                        <div className="mt-3 pl-3 border-l-4 border-amber-400 text-sm text-slate-600 dark:text-slate-400 leading-relaxed">
+                          {qna.answer}
+                        </div>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* Bottom Nav Pills */}
+            <NavPills />
+          </main>
+        )}
+      </div>
+    );
+  };
+
   return (
     <div className="min-h-screen flex flex-col font-sans bg-[#FFFDF9] dark:bg-[#0B1120] text-slate-900 dark:text-slate-100 selection:bg-orange-200 selection:text-orange-900 dark:selection:bg-orange-900 dark:selection:text-orange-100 transition-colors duration-200">
       {currentView === 'upload' && <UploadScreen />}
@@ -2324,6 +2826,8 @@ const App = () => {
       {currentView === 'details' && <DetailsScreen />}
       {currentView === 'weekly-revision' && <WeeklyRevisionScreen />}
       {currentView === 'syllabus-tracker' && <SyllabusTrackerScreen />}
+      {currentView === 'notes' && <NotesSubjectScreen />}
+      {currentView === 'notes-lesson' && <NotesLessonScreen />}
       
       <MenuModal />
     </div>
@@ -2331,3 +2835,4 @@ const App = () => {
 };
 
 export default App;
+

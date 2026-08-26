@@ -5,6 +5,7 @@ const currentAffairsRoutes = require('./routes/currentAffairsRoutes');
 const notificationRoutes = require('./routes/notificationRoutes');
 const weeklyRevisionRoutes = require('./routes/weeklyRevisionRoutes');
 const syllabusRoutes = require('./routes/syllabusRoutes');
+const dailyNotesRoutes = require('./routes/dailyNotesRoutes');
 
 const app = express();
 
@@ -29,6 +30,7 @@ app.use('/api/current-affairs', currentAffairsRoutes);
 app.use('/api/notifications', notificationRoutes);
 app.use('/api/weekly-revision', weeklyRevisionRoutes);
 app.use('/api/syllabus', syllabusRoutes);
+app.use('/api/daily-notes', dailyNotesRoutes);
 
 // Catch 404 Route Not Found
 app.use((req, res, next) => {
