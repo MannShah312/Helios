@@ -353,7 +353,7 @@ class CurrentAffairsService {
           topics: payload.topics,
           processingStatus: 'COMPLETED',
         },
-        { upsert: true, new: true, runValidators: true }
+        { upsert: true, returnDocument: 'after', runValidators: true }
       );
 
       console.log('[CurrentAffairs] Processing complete');

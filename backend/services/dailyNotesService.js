@@ -325,7 +325,7 @@ class DailyNotesService {
         upscTakeaways: { prelims: [], mains: [] },
         quickCheck: []
       },
-      { upsert: true, new: true, setDefaultsOnInsert: true }
+      { upsert: true, returnDocument: 'after', setDefaultsOnInsert: true }
     );
 
     // Call Gemini for rich content
@@ -407,7 +407,7 @@ IMPORTANT:
         generationStatus: 'COMPLETED',
         processingError: null
       },
-      { new: true }
+      { returnDocument: 'after' }
     );
 
     console.log(`[DailyNotes] ✅ Generated "${topicDef.title}" (order ${nextOrder}) for ${subject}.`);
@@ -457,7 +457,7 @@ IMPORTANT:
         upscTakeaways: { prelims: [], mains: [] },
         quickCheck: []
       },
-      { upsert: true, new: true, setDefaultsOnInsert: true }
+      { upsert: true, returnDocument: 'after', setDefaultsOnInsert: true }
     );
 
     const ai = getAiClient();
@@ -513,7 +513,7 @@ Generate a daily lesson following this philosophy:
         generationStatus: 'COMPLETED',
         processingError: null
       },
-      { new: true }
+      { returnDocument: 'after' }
     );
 
     return updatedNote;

@@ -62,7 +62,7 @@ class ArticleService {
     return await Article.findByIdAndUpdate(
       id,
       updateData,
-      { new: true, runValidators: true } // Return the updated doc and run schema validators
+      { returnDocument: 'after', runValidators: true } // Return the updated doc and run schema validators
     );
   }
 

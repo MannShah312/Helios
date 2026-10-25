@@ -42,7 +42,7 @@ class NotificationController {
       const subscription = await Subscription.findOneAndUpdate(
         { endpoint },
         { endpoint, keys },
-        { upsert: true, new: true, runValidators: true }
+        { upsert: true, returnDocument: 'after', runValidators: true }
       );
 
       res.status(201).json({

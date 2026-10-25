@@ -304,7 +304,7 @@ class WeeklyRevisionService {
           };
         })
       },
-      { upsert: true, new: true, runValidators: true }
+      { upsert: true, returnDocument: 'after', runValidators: true }
     );
 
     // 6. Broadcast notification asynchronously
